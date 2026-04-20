@@ -2,6 +2,8 @@
 
 A series of games for improving intuition for working with options
 
+You can use this by simply running index.html on a browser
+
 ## Games
 
 ### Put-Call Parity
