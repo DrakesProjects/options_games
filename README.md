@@ -20,6 +20,6 @@ Named positions are checked against a pre-computed lookup table of Greek signs. 
 
 ### Arbitrage
 
-A two-phase game. In phase 1, decide whether an arbitrage opportunity exists in the presented option prices (Arb / No Arb). In phase 2, if you identify arb, construct a trade using a leg builder (Buy, Sell, Lend, or Borrow each instrument).
+A two-phase game. In phase 1, decide whether an arbitrage opportunity exists in the presented option prices (Arb / No Arb). In phase 2, if you identify arb, construct a an arbitrage trade.
 
 Prices are generated with a 70% chance of containing arb, introduced by perturbing one price to violate a no-arbitrage condition: Put-Call Parity, Vertical Spread Bounds, Convexity/Butterfly, or Box Spread. Your trade is validated by simulating payoffs across stock price scenarios from $0 to 3×S; it must be non-negative everywhere and strictly positive somewhere (tolerance ±$0.01).
