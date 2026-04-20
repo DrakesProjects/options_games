@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Put-Call Parity</title>
+  <link rel="stylesheet" href="../style.css">
+</head>
+<body class="game-page">
+
+  <!-- Always-visible top bar -->
+  <div class="top-bar">
+    <div class="top-bar-left">
+      <span class="top-bar-title">Put-Call Parity</span>
+      <a href="../index.html" class="back-link">← Back</a>
+    </div>
+    <div id="top-bar-right" class="top-bar-right hidden">
+      <span class="score-display">Score: <span id="score-value">0</span></span>
+    </div>
+  </div>
+
+  <!-- Timer bar (only visible during game) -->
+  <div id="timer-wrap" class="timer-bar-wrap hidden">
+    <div id="timer-bar" class="timer-bar" style="width:100%"></div>
+  </div>
+  <div id="timer-label" class="timer-label hidden"></div>
+
+  <!-- Setup screen -->
+  <div id="setup-screen" class="setup-overlay">
+    <div class="setup-box">
+      <label class="setup-label">Session duration</label>
+      <select id="duration-select" class="duration-select">
+        <option value="60">1 min</option>
+        <option value="120" selected>2 min</option>
+        <option value="300">5 min</option>
+        <option value="900">15 min</option>
+        <option value="1800">30 min</option>
+        <option value="3600">60 min</option>
+      </select>
+      <button id="start-btn" class="btn">Start</button>
+    </div>
+  </div>
+
+  <!-- Game screen -->
+  <div id="game-screen" class="game-center hidden">
+    <div class="round-card">
+      <table class="price-table">
+        <tbody id="price-table-body"></tbody>
+      </table>
+
+      <div class="answer-row">
+        <input
+          id="answer-input"
+          class="answer-input"
+          type="number"
+          step="0.01"
+          placeholder="$0.00"
+          autocomplete="off"
+        >
+        <button id="submit-btn" class="btn">Submit</button>
+      </div>
+
+      <div id="feedback" class="feedback"></div>
+    </div>
+  </div>
+
+  <!-- End screen -->
+  <div id="end-screen" class="game-center hidden">
+    <div class="end-box">
+      <h2>Time's up</h2>
+      <div class="final-score">
+        <span id="final-score">0</span>
+        <span class="label">correct answers</span>
+      </div>
+      <p id="missed-answer" class="missed-answer"></p>
+      <button id="play-again-btn" class="btn">Play again</button>
+    </div>
+  </div>
+
+  <script src="../js/parity.js"></script>
+</body>
+</html>

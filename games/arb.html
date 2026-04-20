@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Arbitrage Construction</title>
+  <link rel="stylesheet" href="../style.css">
+</head>
+<body class="game-page">
+
+  <div class="top-bar">
+    <div class="top-bar-left">
+      <span class="top-bar-title">Arbitrage Construction</span>
+      <a href="../index.html" class="back-link">← Back</a>
+    </div>
+    <div id="top-bar-right" class="top-bar-right hidden">
+      <span class="score-display">Score: <span id="score-value">0</span></span>
+    </div>
+  </div>
+
+  <div id="timer-wrap" class="timer-bar-wrap hidden">
+    <div id="timer-bar" class="timer-bar" style="width:100%"></div>
+  </div>
+  <div id="timer-label" class="timer-label hidden"></div>
+
+  <!-- Setup screen -->
+  <div id="setup-screen" class="setup-overlay">
+    <div class="setup-box">
+      <label class="setup-label">Session duration</label>
+      <select id="duration-select" class="duration-select">
+        <option value="60">1 min</option>
+        <option value="120" selected>2 min</option>
+        <option value="300">5 min</option>
+        <option value="900">15 min</option>
+        <option value="1800">30 min</option>
+        <option value="3600">60 min</option>
+      </select>
+
+      <label class="setup-label">Arbitrage types</label>
+      <div class="setup-checklist">
+        <label><input type="checkbox" class="arb-type-check" value="parity"    checked> Put-call parity</label>
+        <label><input type="checkbox" class="arb-type-check" value="spread"          > Vertical spread bounds</label>
+        <label><input type="checkbox" class="arb-type-check" value="butterfly"       > Butterfly / convexity</label>
+        <label><input type="checkbox" class="arb-type-check" value="box"             > Box spread</label>
+      </div>
+
+      <button id="start-btn" class="btn">Start</button>
+    </div>
+  </div>
+
+  <!-- Game screen -->
+  <div id="game-screen" class="game-center hidden">
+    <div class="round-card arb-card">
+      <div id="round-type-label" class="round-type-label"></div>
+
+      <table class="price-table">
+        <tbody id="price-table-body"></tbody>
+      </table>
+
+      <div class="identify-row">
+        <button class="identify-btn" data-answer="arb">Arb</button>
+        <button class="identify-btn" data-answer="no-arb">No Arb</button>
+      </div>
+
+      <div id="trade-builder" class="hidden">
+        <div class="trade-builder-label">Build your trade:</div>
+        <div id="trade-rows"></div>
+        <button id="submit-trade-btn" class="btn" style="margin-top:0.75rem;">Submit</button>
+      </div>
+
+      <div id="feedback" class="feedback"></div>
+    </div>
+  </div>
+
+  <!-- End screen -->
+  <div id="end-screen" class="game-center hidden">
+    <div class="end-box">
+      <h2>Time's up</h2>
+      <div class="final-score">
+        <span id="final-score">0</span>
+        <span class="label">correct answers</span>
+      </div>
+      <p id="last-round" class="missed-answer"></p>
+      <button id="play-again-btn" class="btn">Play again</button>
+    </div>
+  </div>
+
+  <script src="../js/arb.js"></script>
+</body>
+</html>

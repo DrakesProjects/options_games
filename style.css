@@ -1,0 +1,492 @@
+*, *::before, *::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  font-family: 'Courier New', Courier, monospace;
+  background: #f5f5f0;
+  color: #1a1a1a;
+  min-height: 100vh;
+  padding: 2rem;
+}
+
+h1 {
+  font-size: 1.6rem;
+  font-weight: bold;
+  margin-bottom: 0.25rem;
+}
+
+.subtitle {
+  color: #666;
+  font-size: 0.9rem;
+  margin-bottom: 2rem;
+}
+
+.btn {
+  display: inline-block;
+  padding: 0.5rem 1rem;
+  background: #1a1a1a;
+  color: #fff;
+  text-decoration: none;
+  font-family: inherit;
+  font-size: 0.85rem;
+  cursor: pointer;
+  border: none;
+  width: fit-content;
+}
+
+.btn:hover { background: #333; }
+
+/* ── Hub page ───────────────────────────────────────────── */
+
+.game-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  width: 280px;
+}
+
+.game-card {
+  background: #fff;
+  border: 1px solid #ddd;
+  padding: 1.25rem;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.75rem;
+  text-align: center;
+}
+
+.game-card h2 {
+  font-size: 1rem;
+  font-weight: bold;
+}
+
+.game-card.disabled {
+  opacity: 0.4;
+  pointer-events: none;
+}
+
+/* ── Game page shell ────────────────────────────────────── */
+
+body.game-page {
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  overflow: hidden;
+}
+
+/* Top bar */
+.top-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.75rem 1.25rem;
+  border-bottom: 1px solid #ddd;
+  background: #fff;
+  flex-shrink: 0;
+}
+
+.top-bar-left {
+  display: flex;
+  align-items: baseline;
+  gap: 1rem;
+}
+
+.top-bar-title {
+  font-size: 1rem;
+  font-weight: bold;
+}
+
+.back-link {
+  font-size: 0.8rem;
+  color: #888;
+  text-decoration: none;
+}
+
+.back-link:hover { color: #333; }
+
+.top-bar-right {
+  font-size: 0.9rem;
+}
+
+.score-display span {
+  font-weight: bold;
+}
+
+/* Timer */
+.timer-bar-wrap {
+  background: #e0e0e0;
+  height: 5px;
+  width: 100%;
+  flex-shrink: 0;
+}
+
+.timer-bar {
+  height: 100%;
+  background: #1a1a1a;
+  transition: width 1s linear;
+}
+
+.timer-bar.warning { background: #c0392b; }
+
+.timer-label {
+  font-size: 0.75rem;
+  color: #888;
+  padding: 0.25rem 1.25rem;
+  flex-shrink: 0;
+}
+
+/* ── Setup overlay (distinct from game) ─────────────────── */
+
+.setup-overlay {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.setup-box {
+  background: #fff;
+  border: 1px solid #ddd;
+  padding: 2rem 2.5rem;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1rem;
+  min-width: 240px;
+  text-align: center;
+}
+
+.setup-box h2 {
+  font-size: 1.1rem;
+  font-weight: bold;
+}
+
+.setup-identity {
+  font-size: 1rem;
+  color: #555;
+  letter-spacing: 0.02em;
+}
+
+.setup-label {
+  font-size: 0.8rem;
+  color: #888;
+}
+
+.duration-select {
+  font-family: inherit;
+  font-size: 0.85rem;
+  padding: 0.45rem 0.6rem;
+  border: 1px solid #ccc;
+  background: #fff;
+  cursor: pointer;
+  width: 140px;
+}
+
+.duration-select:focus {
+  outline: none;
+  border-color: #1a1a1a;
+}
+
+.mode-select {
+  width: auto;
+}
+
+/* ── Game center (round card & end screen) ──────────────── */
+
+.game-center {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.round-card {
+  background: #fff;
+  border: 1px solid #ddd;
+  padding: 1.5rem;
+  width: 340px;
+}
+
+.price-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-bottom: 1.25rem;
+}
+
+.price-table tr {
+  border-bottom: 1px solid #eee;
+}
+
+.price-table tr:last-child {
+  border-bottom: none;
+}
+
+.price-table td {
+  padding: 0.4rem 0;
+  font-size: 0.9rem;
+}
+
+.price-table td:first-child {
+  color: #555;
+  width: 55%;
+}
+
+.price-table td.unknown {
+  font-weight: bold;
+  color: #1a1a1a;
+}
+
+.price-table td.unknown-label {
+  font-weight: bold;
+}
+
+/* Answer row */
+.answer-row {
+  display: flex;
+  gap: 0.5rem;
+  align-items: center;
+}
+
+.answer-input {
+  font-family: inherit;
+  font-size: 0.95rem;
+  padding: 0.45rem 0.6rem;
+  border: 1px solid #ccc;
+  width: 120px;
+}
+
+.answer-input:focus {
+  outline: none;
+  border-color: #1a1a1a;
+}
+
+/* Feedback */
+.feedback {
+  font-size: 0.85rem;
+  margin-top: 0.75rem;
+  min-height: 1.2em;
+}
+
+.feedback.correct { color: #27ae60; }
+.feedback.wrong { color: #c0392b; }
+
+/* End box */
+.end-box {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.5rem;
+  text-align: center;
+}
+
+.end-box h2 {
+  font-size: 1.1rem;
+}
+
+.final-score {
+  font-size: 3rem;
+  font-weight: bold;
+  margin: 0.5rem 0;
+}
+
+.final-score .label {
+  font-size: 0.85rem;
+  font-weight: normal;
+  color: #666;
+  display: block;
+}
+
+.missed-answer {
+  font-size: 0.8rem;
+  color: #555;
+  margin-bottom: 1rem;
+  max-width: 300px;
+}
+
+/* ── Arbitrage game ─────────────────────────────────────── */
+
+.arb-card {
+  width: 400px;
+}
+
+.round-type-label {
+  font-size: 0.75rem;
+  color: #999;
+  margin-bottom: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.identify-row {
+  display: flex;
+  gap: 0.5rem;
+  margin-bottom: 1rem;
+}
+
+.identify-btn {
+  flex: 1;
+  padding: 0.55rem;
+  font-family: inherit;
+  font-size: 0.9rem;
+  background: #fff;
+  border: 1px solid #ccc;
+  cursor: pointer;
+}
+
+.identify-btn:hover:not(:disabled) { border-color: #1a1a1a; }
+.identify-btn:disabled { opacity: 0.4; cursor: default; }
+
+.trade-builder-label {
+  font-size: 0.8rem;
+  color: #888;
+  margin-bottom: 0.5rem;
+}
+
+.trade-row {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.3rem 0;
+  border-bottom: 1px solid #eee;
+  font-size: 0.82rem;
+}
+
+.trade-row:last-child { border-bottom: none; }
+
+.trade-label {
+  flex: 1;
+  color: #444;
+}
+
+.qty-input {
+  font-family: inherit;
+  font-size: 0.85rem;
+  width: 44px;
+  padding: 0.25rem 0.3rem;
+  border: 1px solid #ccc;
+  text-align: center;
+}
+
+.qty-input:focus { outline: none; border-color: #1a1a1a; }
+
+.action-btn-group {
+  display: flex;
+  gap: 0.25rem;
+}
+
+.action-btn {
+  padding: 0.25rem 0.45rem;
+  font-family: inherit;
+  font-size: 0.78rem;
+  background: #fff;
+  border: 1px solid #ccc;
+  cursor: pointer;
+}
+
+.action-btn:hover { border-color: #1a1a1a; }
+
+.action-btn.selected {
+  background: #1a1a1a;
+  color: #fff;
+  border-color: #1a1a1a;
+}
+
+/* ── Greeks game ────────────────────────────────────────── */
+
+.setup-checklist {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.3rem 1.5rem;
+  font-size: 0.85rem;
+  text-align: left;
+}
+
+.setup-checklist label {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  cursor: pointer;
+}
+
+.setup-checklist label.disabled-label {
+  opacity: 0.35;
+  cursor: not-allowed;
+}
+
+.setup-note {
+  font-size: 0.75rem;
+  color: #999;
+  text-align: left;
+  width: 100%;
+}
+
+.position-name {
+  font-size: 1.1rem;
+  font-weight: bold;
+  margin-bottom: 0.3rem;
+}
+
+.position-legs {
+  font-size: 0.8rem;
+  color: #666;
+  margin-bottom: 1.25rem;
+}
+
+.position-params {
+  font-size: 0.85rem;
+  color: #555;
+  margin-bottom: 0.5rem;
+}
+
+.position-legs-list {
+  list-style: none;
+  font-size: 0.82rem;
+  color: #444;
+  margin-bottom: 1.25rem;
+  line-height: 1.7;
+}
+
+.position-legs-list li::before {
+  content: '• ';
+}
+
+.greek-question-row {
+  margin-bottom: 1.25rem;
+}
+
+.greek-question {
+  font-size: 0.88rem;
+  color: #555;
+  margin-bottom: 0.6rem;
+}
+
+.sign-btn-group {
+  display: flex;
+  gap: 0.4rem;
+}
+
+.sign-btn {
+  width: 48px;
+  padding: 0.4rem 0;
+  background: #fff;
+  border: 1px solid #ccc;
+  font-family: inherit;
+  font-size: 1rem;
+  cursor: pointer;
+  text-align: center;
+}
+
+.sign-btn:hover { border-color: #1a1a1a; }
+
+.sign-btn.selected {
+  background: #1a1a1a;
+  color: #fff;
+  border-color: #1a1a1a;
+}
+
+.hidden { display: none !important; }
