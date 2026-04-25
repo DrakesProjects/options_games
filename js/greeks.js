@@ -244,7 +244,6 @@ let timerInterval = null;
 let currentQuestion = null;
 let selectedGreekKeys = ['delta','gamma','theta','vega'];
 let selectedMode = 'named';
-let greeksPerQuestion = '1';
 
 // ─── DOM refs ─────────────────────────────────────────────────────────────────
 
@@ -303,11 +302,11 @@ function updateSelectAllBtn() {
 
 function updateBatchSelect() {
   const count = selectedGreekKeys.length;
-  const prev = greeksPerQuestion;
+  const prev = batchSelect.value;
 
   batchSelect.innerHTML = '';
   for (const n of [1, 3, 5]) {
-    if (n > count) break;
+    if (n >= count) break;
     const opt = document.createElement('option');
     opt.value = String(n);
     opt.textContent = String(n);
@@ -319,8 +318,7 @@ function updateBatchSelect() {
   batchSelect.appendChild(allOpt);
 
   const validValues = [...batchSelect.options].map(o => o.value);
-  batchSelect.value = validValues.includes(prev) ? prev : validValues[validValues.length - 2] ?? 'all';
-  greeksPerQuestion = batchSelect.value;
+  batchSelect.value = validValues.includes(prev) ? prev : validValues[0];
 }
 
 function updateGreekSelection() {
@@ -332,10 +330,6 @@ function updateGreekSelection() {
   updateSelectAllBtn();
   updateBatchSelect();
 }
-
-batchSelect.addEventListener('change', () => {
-  greeksPerQuestion = batchSelect.value;
-});
 
 selectAllBtn.addEventListener('click', () => {
   const enabled = [...document.querySelectorAll('.greek-check:not(:disabled)')];
@@ -396,7 +390,8 @@ function customOkKeys() {
 }
 
 function resolveN() {
-  return greeksPerQuestion === 'all' ? selectedGreekKeys.length : parseInt(greeksPerQuestion, 10);
+  const v = batchSelect.value;
+  return v === 'all' ? selectedGreekKeys.length : parseInt(v, 10);
 }
 
 function generateQuestion() {
