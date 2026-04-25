@@ -159,8 +159,9 @@ const LEG_TYPES = ['call','call','put','put','underlying','underlying'];
 function randInt(min, max) { return Math.floor(Math.random() * (max - min + 1)) + min; }
 function randFloat(min, max) { return min + Math.random() * (max - min); }
 function pick(arr) { return arr[Math.floor(Math.random() * arr.length)]; }
+function pickN(arr, n) { return [...arr].sort(() => Math.random() - 0.5).slice(0, n); }
 
-function generateCustomQuestion(selectedKeys, customOkKeys) {
+function generateCustomQuestion(selectedKeys, customOkKeys, n) {
   for (let attempt = 0; attempt < 30; attempt++) {
     const S = 100;
     const r = 0.05;
@@ -196,46 +197,42 @@ function generateCustomQuestion(selectedKeys, customOkKeys) {
 
     const net = computeNetGreeks(legs);
 
-    // Pick which Greek to ask (must be in customOkKeys, must not be ~0)
     const candidates = customOkKeys.filter(k => sign(net[k]) !== '~0');
     if (candidates.length === 0) continue;
 
-    const askedKey = pick(candidates);
-    const correctSign = sign(net[askedKey]);
-
+    const pickedKeys = pickN(candidates, Math.min(n, candidates.length));
     return {
       mode: 'custom',
       legs,
       S, r,
-      askedKey,
-      askedLabel: GREEK_BY_KEY[askedKey].label,
-      correctSign,
+      items: pickedKeys.map(k => ({ key: k, label: GREEK_BY_KEY[k].label, correctSign: sign(net[k]) })),
     };
   }
   return null; // signal to fall back to named
 }
 
-function generateNamedQuestion(selectedKeys) {
+function generateNamedQuestion(selectedKeys, n) {
   for (let attempt = 0; attempt < 30; attempt++) {
     const pos = pick(NAMED_POSITIONS);
-    // Pick a Greek that has a non-~0 answer for this position
     const candidates = selectedKeys.filter(k => pos.greeks[k] !== '~0');
     if (candidates.length === 0) continue;
-    const askedKey = pick(candidates);
+    const pickedKeys = pickN(candidates, Math.min(n, candidates.length));
     return {
       mode: 'named',
       name: pos.name,
       legs: pos.legs,
-      askedKey,
-      askedLabel: GREEK_BY_KEY[askedKey].label,
-      correctSign: pos.greeks[askedKey],
+      items: pickedKeys.map(k => ({ key: k, label: GREEK_BY_KEY[k].label, correctSign: pos.greeks[k] })),
     };
   }
   // absolute fallback
   const pos = NAMED_POSITIONS[0]; // Long Call
-  const askedKey = selectedKeys[0];
-  return { mode: 'named', name: pos.name, legs: pos.legs, askedKey,
-    askedLabel: GREEK_BY_KEY[askedKey].label, correctSign: pos.greeks[askedKey] };
+  const key = selectedKeys[0];
+  return {
+    mode: 'named',
+    name: pos.name,
+    legs: pos.legs,
+    items: [{ key, label: GREEK_BY_KEY[key].label, correctSign: pos.greeks[key] }],
+  };
 }
 
 // ─── Game state ───────────────────────────────────────────────────────────────
@@ -247,28 +244,30 @@ let timerInterval = null;
 let currentQuestion = null;
 let selectedGreekKeys = ['delta','gamma','theta','vega'];
 let selectedMode = 'named';
+let greeksPerQuestion = '1';
 
 // ─── DOM refs ─────────────────────────────────────────────────────────────────
 
-const setupScreen   = document.getElementById('setup-screen');
-const gameScreen    = document.getElementById('game-screen');
-const endScreen     = document.getElementById('end-screen');
-const timerWrap     = document.getElementById('timer-wrap');
-const timerBar      = document.getElementById('timer-bar');
-const timerLabel    = document.getElementById('timer-label');
-const topBarRight   = document.getElementById('top-bar-right');
-const scoreDisplay  = document.getElementById('score-value');
-const durationSelect= document.getElementById('duration-select');
-const modeSelect    = document.getElementById('mode-select');
-const startBtn      = document.getElementById('start-btn');
-const positionDisplay = document.getElementById('position-display');
-const greekQuestion = document.getElementById('greek-question');
-const signBtns      = document.querySelectorAll('.sign-btn');
-const submitBtn     = document.getElementById('submit-btn');
-const feedbackEl    = document.getElementById('feedback');
-const finalScoreEl  = document.getElementById('final-score');
-const lastAnswerEl  = document.getElementById('last-answer');
-const playAgainBtn  = document.getElementById('play-again-btn');
+const setupScreen    = document.getElementById('setup-screen');
+const gameScreen     = document.getElementById('game-screen');
+const endScreen      = document.getElementById('end-screen');
+const timerWrap      = document.getElementById('timer-wrap');
+const timerBar       = document.getElementById('timer-bar');
+const timerLabel     = document.getElementById('timer-label');
+const topBarRight    = document.getElementById('top-bar-right');
+const scoreDisplay   = document.getElementById('score-value');
+const durationSelect = document.getElementById('duration-select');
+const modeSelect     = document.getElementById('mode-select');
+const batchSelect    = document.getElementById('batch-select');
+const startBtn       = document.getElementById('start-btn');
+const positionDisplay  = document.getElementById('position-display');
+const greekItemsArea   = document.getElementById('greek-items-area');
+const submitBtn      = document.getElementById('submit-btn');
+const feedbackEl     = document.getElementById('feedback');
+const finalScoreEl   = document.getElementById('final-score');
+const lastAnswerEl   = document.getElementById('last-answer');
+const playAgainBtn   = document.getElementById('play-again-btn');
+const selectAllBtn   = document.getElementById('select-all-btn');
 
 // ─── Setup ────────────────────────────────────────────────────────────────────
 
@@ -296,13 +295,57 @@ document.querySelectorAll('.greek-check').forEach(cb => {
   cb.addEventListener('change', updateGreekSelection);
 });
 
+function updateSelectAllBtn() {
+  const enabled = [...document.querySelectorAll('.greek-check:not(:disabled)')];
+  const allChecked = enabled.length > 0 && enabled.every(cb => cb.checked);
+  selectAllBtn.textContent = allChecked ? 'Deselect All' : 'Select All';
+}
+
+function updateBatchSelect() {
+  const count = selectedGreekKeys.length;
+  const prev = greeksPerQuestion;
+
+  batchSelect.innerHTML = '';
+  for (const n of [1, 3, 5]) {
+    if (n > count) break;
+    const opt = document.createElement('option');
+    opt.value = String(n);
+    opt.textContent = String(n);
+    batchSelect.appendChild(opt);
+  }
+  const allOpt = document.createElement('option');
+  allOpt.value = 'all';
+  allOpt.textContent = 'All';
+  batchSelect.appendChild(allOpt);
+
+  const validValues = [...batchSelect.options].map(o => o.value);
+  batchSelect.value = validValues.includes(prev) ? prev : validValues[validValues.length - 2] ?? 'all';
+  greeksPerQuestion = batchSelect.value;
+}
+
 function updateGreekSelection() {
   selectedGreekKeys = [];
   document.querySelectorAll('.greek-check:checked').forEach(cb => {
     selectedGreekKeys.push(cb.value);
   });
   startBtn.disabled = selectedGreekKeys.length === 0;
+  updateSelectAllBtn();
+  updateBatchSelect();
 }
+
+batchSelect.addEventListener('change', () => {
+  greeksPerQuestion = batchSelect.value;
+});
+
+selectAllBtn.addEventListener('click', () => {
+  const enabled = [...document.querySelectorAll('.greek-check:not(:disabled)')];
+  const allChecked = enabled.every(cb => cb.checked);
+  enabled.forEach(cb => { cb.checked = !allChecked; });
+  updateGreekSelection();
+});
+
+updateSelectAllBtn();
+updateBatchSelect();
 
 startBtn.addEventListener('click', startSession);
 
@@ -352,26 +395,30 @@ function customOkKeys() {
   return selectedGreekKeys.filter(k => GREEK_BY_KEY[k].customOk);
 }
 
+function resolveN() {
+  return greeksPerQuestion === 'all' ? selectedGreekKeys.length : parseInt(greeksPerQuestion, 10);
+}
+
 function generateQuestion() {
+  const n = resolveN();
   const useNamed  = selectedMode === 'named'  || selectedMode === 'both';
   const useCustom = selectedMode === 'custom' || selectedMode === 'both';
   const okForCustom = customOkKeys();
 
   if (useCustom && okForCustom.length > 0) {
     if (!useNamed || Math.random() < 0.5) {
-      const q = generateCustomQuestion(selectedGreekKeys, okForCustom);
+      const q = generateCustomQuestion(selectedGreekKeys, okForCustom, n);
       if (q) return q;
     }
   }
-  if (useNamed) return generateNamedQuestion(selectedGreekKeys);
+  if (useNamed) return generateNamedQuestion(selectedGreekKeys, n);
   // last resort
-  return generateNamedQuestion(selectedGreekKeys);
+  return generateNamedQuestion(selectedGreekKeys, n);
 }
 
 function loadNextQuestion() {
   currentQuestion = generateQuestion();
   renderQuestion(currentQuestion);
-  clearSignSelection();
   feedbackEl.textContent = '';
   feedbackEl.className = 'feedback';
   submitBtn.disabled = true;
@@ -388,26 +435,34 @@ function renderQuestion(q) {
       `<div class="position-params">Stock: $${q.S}</div>` +
       `<ul class="position-legs-list">${legLines}</ul>`;
   }
-  greekQuestion.textContent = 'What is the sign of ' + q.askedLabel + '?';
+
+  greekItemsArea.innerHTML = '';
+  for (const item of q.items) {
+    const row = document.createElement('div');
+    row.className = 'greek-item-row';
+    row.dataset.key = item.key;
+    row.innerHTML =
+      `<div class="greek-item-label">${item.label}</div>` +
+      `<div class="sign-btn-group">` +
+        `<button class="sign-btn" data-sign="-">−</button>` +
+        `<button class="sign-btn" data-sign="~0">~0</button>` +
+        `<button class="sign-btn" data-sign="+">+</button>` +
+      `</div>`;
+    row.querySelectorAll('.sign-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        if (btn.disabled) return;
+        row.querySelectorAll('.sign-btn').forEach(b => b.classList.remove('selected'));
+        btn.classList.add('selected');
+        updateSubmitState();
+      });
+    });
+    greekItemsArea.appendChild(row);
+  }
 }
 
-// ─── Sign buttons ─────────────────────────────────────────────────────────────
-
-let selectedSign = null;
-
-signBtns.forEach(btn => {
-  btn.addEventListener('click', () => {
-    signBtns.forEach(b => b.classList.remove('selected'));
-    btn.classList.add('selected');
-    selectedSign = btn.dataset.sign;
-    submitBtn.disabled = false;
-  });
-});
-
-function clearSignSelection() {
-  signBtns.forEach(b => b.classList.remove('selected'));
-  selectedSign = null;
-  submitBtn.disabled = true;
+function updateSubmitState() {
+  const rows = greekItemsArea.querySelectorAll('.greek-item-row');
+  submitBtn.disabled = ![...rows].every(row => row.querySelector('.sign-btn.selected'));
 }
 
 // ─── Submit ───────────────────────────────────────────────────────────────────
@@ -415,15 +470,39 @@ function clearSignSelection() {
 submitBtn.addEventListener('click', checkAnswer);
 
 function checkAnswer() {
-  if (!selectedSign || !currentQuestion) return;
-  if (selectedSign === currentQuestion.correctSign) {
-    score++;
+  const rows = [...greekItemsArea.querySelectorAll('.greek-item-row')];
+
+  let allCorrect = true;
+  rows.forEach((row, i) => {
+    const item = currentQuestion.items[i];
+    const selected = row.querySelector('.sign-btn.selected');
+    if (!selected || selected.dataset.sign !== item.correctSign) {
+      allCorrect = false;
+    }
+  });
+
+  if (allCorrect) {
+    score += currentQuestion.items.length;
     updateScoreDisplay();
     loadNextQuestion();
   } else {
+    rows.forEach((row, i) => {
+      const item = currentQuestion.items[i];
+      const selected = row.querySelector('.sign-btn.selected');
+      const isCorrect = selected && selected.dataset.sign === item.correctSign;
+      if (isCorrect) {
+        // Lock correct rows so the player doesn't have to re-answer them
+        row.classList.add('item-correct');
+        row.querySelectorAll('.sign-btn').forEach(b => { b.disabled = true; });
+      } else {
+        // Clear wrong selection so the player can retry
+        row.classList.remove('item-wrong');
+        row.querySelectorAll('.sign-btn').forEach(b => b.classList.remove('selected'));
+      }
+    });
     feedbackEl.textContent = '✗ Try again.';
     feedbackEl.className = 'feedback wrong';
-    clearSignSelection();
+    updateSubmitState();
   }
 }
 
@@ -436,9 +515,11 @@ function endSession() {
   timerLabel.classList.add('hidden');
   endScreen.classList.remove('hidden');
   finalScoreEl.textContent = score;
-  if (currentQuestion) {
+  if (currentQuestion && currentQuestion.items.length === 1) {
     lastAnswerEl.textContent =
-      currentQuestion.askedLabel + ' was: ' + currentQuestion.correctSign;
+      currentQuestion.items[0].label + ' was: ' + currentQuestion.items[0].correctSign;
+  } else {
+    lastAnswerEl.textContent = '';
   }
 }
 

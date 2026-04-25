@@ -59,7 +59,11 @@
         <label><input type="checkbox" class="greek-check" value="zomma" data-named-only> Zomma *</label>
         <label><input type="checkbox" class="greek-check" value="color" data-named-only> Color *</label>
       </div>
+      <button id="select-all-btn" class="select-all-btn">Select All</button>
       <p class="setup-note">* Named positions only</p>
+
+      <label class="setup-label">Greeks per question</label>
+      <select id="batch-select" class="duration-select"></select>
 
       <button id="start-btn" class="btn">Start</button>
     </div>
@@ -70,14 +74,8 @@
     <div class="round-card">
       <div id="position-display"></div>
 
-      <div class="greek-question-row">
-        <div id="greek-question" class="greek-question"></div>
-        <div class="sign-btn-group">
-          <button class="sign-btn" data-sign="-">−</button>
-          <button class="sign-btn" data-sign="~0">~0</button>
-          <button class="sign-btn" data-sign="+">+</button>
-        </div>
-      </div>
+      <div class="greek-question-header">What is the sign of...?</div>
+      <div id="greek-items-area"></div>
 
       <button id="submit-btn" class="btn" disabled>Submit</button>
       <div id="feedback" class="feedback"></div>

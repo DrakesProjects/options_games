@@ -398,6 +398,19 @@ body.game-page {
 
 /* ── Greeks game ────────────────────────────────────────── */
 
+.select-all-btn {
+  font-family: inherit;
+  font-size: 0.75rem;
+  color: #888;
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 0;
+  text-decoration: underline;
+}
+
+.select-all-btn:hover { color: #1a1a1a; }
+
 .setup-checklist {
   display: grid;
   grid-template-columns: 1fr 1fr;
@@ -455,15 +468,32 @@ body.game-page {
   content: '• ';
 }
 
-.greek-question-row {
-  margin-bottom: 1.25rem;
-}
-
-.greek-question {
+.greek-question-header {
   font-size: 0.88rem;
   color: #555;
   margin-bottom: 0.6rem;
 }
+
+.greek-items-area {
+  margin-bottom: 1.25rem;
+}
+
+.greek-item-row {
+  display: flex;
+  flex-direction: column;
+  padding: 0.5rem 0;
+  border-bottom: 1px solid #eee;
+}
+
+.greek-item-row:last-child { border-bottom: none; }
+
+.greek-item-label {
+  font-size: 0.88rem;
+  color: #555;
+  margin-bottom: 0.6rem;
+}
+
+.greek-item-row.item-correct .greek-item-label { color: #27ae60; }
 
 .sign-btn-group {
   display: flex;
