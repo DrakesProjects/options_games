@@ -214,7 +214,7 @@ function generateCustomQuestion(selectedKeys, customOkKeys, n) {
 function generateNamedQuestion(selectedKeys, n) {
   for (let attempt = 0; attempt < 30; attempt++) {
     const pos = pick(NAMED_POSITIONS);
-    const candidates = selectedKeys.filter(k => pos.greeks[k] !== '~0');
+    const candidates = selectedKeys;
     if (candidates.length === 0) continue;
     const pickedKeys = pickN(candidates, Math.min(n, candidates.length));
     return {
