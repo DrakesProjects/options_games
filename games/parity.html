@@ -5,8 +5,9 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Put-Call Parity</title>
   <link rel="stylesheet" href="../style.css">
+  <link rel="stylesheet" href="stats.css">
 </head>
-<body class="game-page">
+<body class="game-page" data-stats-game="parity">
 
   <!-- Always-visible top bar -->
   <div class="top-bar">
@@ -37,6 +38,19 @@
         <option value="1800">30 min</option>
         <option value="3600">60 min</option>
       </select>
+
+      <label class="setup-label">Relationships</label>
+      <div class="setup-checklist">
+        <label>
+          <input id="straddle-check" type="checkbox" checked>
+          Straddle
+        </label>
+        <label>
+          <input id="covered-check" type="checkbox" checked>
+          B/W + P&amp;S
+        </label>
+      </div>
+
       <button id="start-btn" class="btn">Start</button>
     </div>
   </div>
@@ -77,6 +91,7 @@
     </div>
   </div>
 
-  <script src="../js/parity.js"></script>
+  <script src="parity.js"></script>
+  <script src="stats.js"></script>
 </body>
 </html>

@@ -1,0 +1,218 @@
+.setup-overlay.setup-with-stats {
+  align-content: flex-start;
+  align-items: center;
+  flex-direction: column;
+  gap: 1rem;
+  flex-wrap: nowrap;
+  padding: 2rem;
+}
+
+.setup-overlay.setup-with-stats > .setup-box {
+  width: min(100%, 28rem);
+  min-width: 22rem;
+  padding: 2.5rem 3rem;
+}
+
+.stats-panel {
+  box-sizing: border-box;
+  width: min(100%, 42rem);
+  margin: 0;
+  padding: 2rem 2.5rem;
+  background: #fff;
+  border: 1px solid #ddd;
+  text-align: left;
+}
+
+.stats-heading-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.stats-title {
+  margin: 0;
+  font-size: 1rem;
+}
+
+.stats-subtitle,
+.stats-empty {
+  margin: 0.25rem 0 0;
+  color: #777;
+  font-size: 0.8rem;
+}
+
+.stats-list {
+  display: grid;
+  gap: 0.5rem;
+  margin-top: 0.75rem;
+}
+
+.stats-chart-figure {
+  margin: 0.8rem 0 0;
+}
+
+.stats-chart {
+  display: block;
+  width: 100%;
+  height: auto;
+  color: #4263eb;
+  overflow: visible;
+}
+
+.stats-chart-frame {
+  fill: transparent;
+  stroke: rgba(127, 127, 127, 0.35);
+}
+
+.stats-chart-gridline {
+  stroke: rgba(127, 127, 127, 0.2);
+  stroke-width: 1;
+}
+
+.stats-chart-line {
+  fill: none;
+  stroke: currentColor;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  stroke-width: 2.5;
+}
+
+.stats-chart-point {
+  fill: currentColor;
+  stroke: white;
+  stroke-width: 1.5;
+}
+
+.stats-chart-label,
+.stats-chart-axis-title,
+.stats-chart-empty {
+  fill: #777;
+  font-family: inherit;
+  font-size: 12px;
+}
+
+.stats-chart-axis-title {
+  font-size: 11px;
+}
+
+.stats-chart-caption {
+  margin-top: 0.15rem;
+  color: #777;
+  font-size: 0.72rem;
+  text-align: center;
+}
+
+.stats-entry {
+  padding: 0.7rem 0.8rem;
+  border: 1px solid rgba(127, 127, 127, 0.3);
+  border-radius: 0.5rem;
+}
+
+.stats-entry-details {
+  display: grid;
+  min-width: 0;
+}
+
+.stats-rate {
+  font-size: 0.95rem;
+}
+
+.stats-summary,
+.stats-date {
+  color: #777;
+  font-size: 0.76rem;
+}
+
+.stats-delete-all {
+  border: 0;
+  background: transparent;
+  color: #b54141;
+  cursor: pointer;
+  font: inherit;
+  font-size: 0.78rem;
+  text-decoration: underline;
+  text-underline-offset: 0.15rem;
+}
+
+.stats-delete-all:disabled {
+  cursor: default;
+  opacity: 0.45;
+  text-decoration: none;
+}
+
+/* Active-game sizing: larger than the setup UI, without taking over the page. */
+#game-screen .round-card {
+  width: min(100%, 30rem);
+  padding: 2rem;
+}
+
+#game-screen .price-table td {
+  padding: 0.55rem 0;
+  font-size: 1.05rem;
+}
+
+#game-screen .price-table .question-row td {
+  font-size: 1.15rem;
+  font-weight: bold;
+}
+
+#game-screen .answer-input {
+  width: 150px;
+  padding: 0.6rem 0.75rem;
+  font-size: 1.1rem;
+}
+
+#game-screen .answer-row .btn,
+#game-screen > .round-card > .btn {
+  padding: 0.65rem 1.2rem;
+  font-size: 1rem;
+}
+
+#game-screen .feedback {
+  font-size: 0.95rem;
+}
+
+#game-screen .position-name {
+  font-size: 1.3rem;
+}
+
+#game-screen .position-legs,
+#game-screen .position-legs-list {
+  font-size: 0.95rem;
+}
+
+#game-screen .position-params,
+#game-screen .greek-question-header,
+#game-screen .greek-item-label {
+  font-size: 1rem;
+}
+
+#game-screen .sign-btn {
+  width: 60px;
+  padding: 0.55rem 0;
+  font-size: 1.15rem;
+}
+
+@media (max-width: 520px) {
+  #game-screen .round-card {
+    padding: 1.5rem;
+  }
+}
+
+@media (max-width: 420px) {
+  .setup-overlay.setup-with-stats {
+    padding: 1rem;
+  }
+
+  .setup-overlay.setup-with-stats > .setup-box,
+  .stats-panel {
+    width: 100%;
+    min-width: 0;
+    padding: 1.5rem;
+  }
+
+  .stats-entry {
+    align-items: flex-start;
+  }
+}
