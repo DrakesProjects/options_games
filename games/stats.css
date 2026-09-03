@@ -143,60 +143,100 @@
 
 /* Active-game sizing: larger than the setup UI, without taking over the page. */
 #game-screen .round-card {
-  width: min(100%, 30rem);
-  padding: 2rem;
+  width: min(92vw, 42rem);
+  margin: auto;
+  padding: clamp(2rem, 3vw, 3rem);
 }
 
 #game-screen .price-table td {
-  padding: 0.55rem 0;
-  font-size: 1.05rem;
+  padding: 0.7rem 0;
+  font-size: clamp(1.1rem, 0.8vw + 0.6rem, 1.35rem);
 }
 
 #game-screen .price-table .question-row td {
-  font-size: 1.15rem;
+  font-size: clamp(1.25rem, 0.9vw + 0.65rem, 1.5rem);
   font-weight: bold;
 }
 
 #game-screen .answer-input {
-  width: 150px;
-  padding: 0.6rem 0.75rem;
-  font-size: 1.1rem;
+  width: 180px;
+  padding: 0.7rem 0.85rem;
+  font-size: 1.25rem;
 }
 
 #game-screen .answer-row .btn,
 #game-screen > .round-card > .btn {
-  padding: 0.65rem 1.2rem;
-  font-size: 1rem;
+  padding: 0.75rem 1.35rem;
+  font-size: 1.1rem;
 }
 
 #game-screen .feedback {
-  font-size: 0.95rem;
+  font-size: 1.05rem;
 }
 
 #game-screen .position-name {
-  font-size: 1.3rem;
+  font-size: 1.5rem;
 }
 
 #game-screen .position-legs,
 #game-screen .position-legs-list {
-  font-size: 0.95rem;
+  font-size: 1.05rem;
 }
 
 #game-screen .position-params,
 #game-screen .greek-question-header,
 #game-screen .greek-item-label {
-  font-size: 1rem;
+  font-size: 1.1rem;
 }
 
 #game-screen .sign-btn {
-  width: 60px;
-  padding: 0.55rem 0;
-  font-size: 1.15rem;
+  width: 68px;
+  padding: 0.65rem 0;
+  font-size: 1.25rem;
+}
+
+#end-screen .end-box {
+  width: min(92vw, 42rem);
+  margin: auto;
+  padding: clamp(2.5rem, 4vw, 4rem);
+  gap: 1rem;
+  background: #fff;
+  border: 1px solid #ddd;
+}
+
+#end-screen .end-box h2 {
+  font-size: clamp(1.5rem, 1vw + 1rem, 2rem);
+}
+
+#end-screen .final-score {
+  margin: 0.75rem 0;
+  font-size: clamp(4rem, 5vw, 5.5rem);
+}
+
+#end-screen .final-score .label {
+  margin-top: 0.35rem;
+  font-size: 1.1rem;
+}
+
+#end-screen .missed-answer {
+  max-width: 36rem;
+  margin-bottom: 1rem;
+  font-size: 1.05rem;
+  line-height: 1.55;
+}
+
+#end-screen .btn {
+  padding: 0.8rem 1.5rem;
+  font-size: 1.1rem;
 }
 
 @media (max-width: 520px) {
   #game-screen .round-card {
     padding: 1.5rem;
+  }
+
+  #end-screen .end-box {
+    padding: 2rem 1.5rem;
   }
 }
 

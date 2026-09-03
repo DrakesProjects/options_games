@@ -88,34 +88,23 @@
         },
       ],
       bw: [
-        { clues: ['call', 'stock', 'strike'], formula: 'B/W = C - parity' },
-        { clues: ['put', 'rc'], formula: 'B/W = P + r/c' },
+        { clues: ['call', 'stock', 'strike', 'rc'], formula: 'B/W = C - parity' },
+        { clues: ['put', 'stock', 'strike', 'rc'], formula: 'B/W = P + r/c' },
       ],
       ps: [
-        { clues: ['call', 'rc'], formula: 'P&S = C - r/c' },
-        { clues: ['put', 'stock', 'strike'], formula: 'P&S = P + parity' },
+        { clues: ['call', 'stock', 'strike', 'rc'], formula: 'P&S = C - r/c' },
+        { clues: ['put', 'stock', 'strike', 'rc'], formula: 'P&S = P + parity' },
       ],
     };
 
-    if (straddleCheck.checked) {
-      variants.call.push({
-        clues: ['straddle', 'put'],
-        formula: 'C = Straddle - P',
-      });
-      variants.put.push({
-        clues: ['straddle', 'call'],
-        formula: 'P = Straddle - C',
-      });
-    }
-
     if (coveredCheck.checked) {
       variants.call.push(
-        { clues: ['bw', 'stock', 'strike'], formula: 'C = B/W + parity' },
-        { clues: ['ps', 'rc'], formula: 'C = P&S + r/c' },
+        { clues: ['bw', 'stock', 'strike', 'rc'], formula: 'C = B/W + parity' },
+        { clues: ['ps', 'stock', 'strike', 'rc'], formula: 'C = P&S + r/c' },
       );
       variants.put.push(
-        { clues: ['bw', 'rc'], formula: 'P = B/W - r/c' },
-        { clues: ['ps', 'stock', 'strike'], formula: 'P = P&S - parity' },
+        { clues: ['bw', 'stock', 'strike', 'rc'], formula: 'P = B/W - r/c' },
+        { clues: ['ps', 'stock', 'strike', 'rc'], formula: 'P = P&S - parity' },
       );
     }
 
@@ -124,15 +113,17 @@
 
   function createRound() {
     const values = createValues();
-    // Sampling once from this array gives every enabled requested value equal probability.
-    const target = choose(enabledTargets);
-    const variant = choose(clueVariants(target));
+    const questionBank = enabledTargets.flatMap((target) => (
+      clueVariants(target).map((variant) => ({ target, ...variant }))
+    ));
+    // Every enabled question variant has the same probability of being selected.
+    const question = choose(questionBank);
     return {
       values,
-      target,
-      clues: variant.clues,
-      formula: variant.formula,
-      answer: values[target],
+      target: question.target,
+      clues: question.clues,
+      formula: question.formula,
+      answer: values[question.target],
     };
   }
 
