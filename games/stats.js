@@ -49,6 +49,7 @@
         && Number.isFinite(entry.completedAt)
         && Number.isFinite(entry.durationSeconds)
         && Number.isFinite(entry.score)
+        && entry.score > 0
         && Number.isFinite(entry.answersPerMinute)
       ));
     } catch {
@@ -118,7 +119,9 @@
     const plotWidth = width - margin.left - margin.right;
     const plotHeight = height - margin.top - margin.bottom;
     const highestRate = Math.max(...chronological.map((entry) => entry.answersPerMinute));
-    const yMaximum = Math.max(1, Math.ceil(highestRate * 1.1));
+    const tickInterval = 0.5;
+    const yMaximum = Math.ceil(highestRate / tickInterval) * tickInterval + tickInterval;
+    const tickCount = Math.round(yMaximum / tickInterval);
     const xPosition = (index) => (
       chronological.length === 1
         ? margin.left + plotWidth / 2
@@ -134,8 +137,8 @@
       class: 'stats-chart-frame',
     });
 
-    for (let tick = 0; tick <= 4; tick += 1) {
-      const rate = yMaximum * tick / 4;
+    for (let tick = 0; tick <= tickCount; tick += 1) {
+      const rate = tickInterval * tick;
       const y = yPosition(rate);
       addSvgElement('line', {
         x1: margin.left,
@@ -149,7 +152,7 @@
         y: y + 4,
         'text-anchor': 'end',
         class: 'stats-chart-label',
-      }, rate.toFixed(rate < 10 && rate % 1 !== 0 ? 1 : 0));
+      }, rate.toFixed(Number.isInteger(rate) ? 0 : 1));
     }
 
     const points = chronological.map((entry, index) => (
@@ -237,7 +240,7 @@
   function recordCompletedGame() {
     const score = Number(finalScore.textContent);
     const durationSeconds = Number(durationSelect.value);
-    if (!Number.isFinite(score) || score < 0 || !Number.isFinite(durationSeconds) || durationSeconds <= 0) {
+    if (!Number.isFinite(score) || score <= 0 || !Number.isFinite(durationSeconds) || durationSeconds <= 0) {
       return;
     }
 

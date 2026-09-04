@@ -110,7 +110,7 @@ body.game-page {
 .back-link:hover { color: #333; }
 
 .top-bar-right {
-  font-size: 0.9rem;
+  font-size: 1.05rem;
 }
 
 .score-display span {
@@ -134,8 +134,8 @@ body.game-page {
 .timer-bar.warning { background: #c0392b; }
 
 .timer-label {
-  font-size: 0.75rem;
-  color: #888;
+  font-size: 1rem;
+  color: #1a1a1a;
   padding: 0.25rem 1.25rem;
   flex-shrink: 0;
 }
