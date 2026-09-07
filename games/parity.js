@@ -44,13 +44,70 @@
     value < 0 ? `-$${Math.abs(value).toFixed(2)}` : `$${value.toFixed(2)}`
   );
   const choose = (items) => items[Math.floor(Math.random() * items.length)];
+  const shuffle = (items) => {
+    const shuffled = items.slice();
+    for (let index = shuffled.length - 1; index > 0; index -= 1) {
+      const swapIndex = Math.floor(Math.random() * (index + 1));
+      [shuffled[index], shuffled[swapIndex]] = [shuffled[swapIndex], shuffled[index]];
+    }
+    return shuffled;
+  };
   const randomCents = (minimum, maximum) => {
     const minCents = Math.round(minimum * 100);
     const maxCents = Math.round(maximum * 100);
     return (minCents + Math.floor(Math.random() * (maxCents - minCents + 1))) / 100;
   };
+  const randomInteger = (minimum, maximum) => (
+    minimum + Math.floor(Math.random() * (maximum - minimum + 1))
+  );
+  const fromCents = (cents) => cents / 100;
 
-  function createValues() {
+  const randomIntegerWithParity = (minimum, maximum, parity) => {
+    let first = minimum;
+    if (((first % 2) + 2) % 2 !== parity) first += 1;
+    return first + 2 * randomInteger(0, Math.floor((maximum - first) / 2));
+  };
+
+  function valuesFromCents({ stock, strike, parity, rc, call, put, straddle, bw, ps }) {
+    return {
+      stock: fromCents(stock),
+      strike: fromCents(strike),
+      parity: fromCents(parity),
+      rc: fromCents(rc),
+      call: fromCents(call),
+      put: fromCents(put),
+      straddle: fromCents(straddle),
+      bw: fromCents(bw),
+      ps: fromCents(ps),
+    };
+  }
+
+  function createStraddleValues() {
+    // Straddle is assigned first. Matching its cent parity with F guarantees
+    // that (Straddle + F) / 2 and (Straddle - F) / 2 are whole-cent values.
+    const straddle = randomInteger(2, 5500);
+    const minimumF = Math.max(straddle - 4000, 2 - straddle, -1210);
+    const maximumF = Math.min(straddle, 7000 - straddle, 1500);
+    const straddleParity = ((straddle % 2) + 2) % 2;
+    const f = randomIntegerWithParity(minimumF, maximumF, straddleParity);
+
+    const call = (straddle + f) / 2;
+    const put = (straddle - f) / 2;
+    const minimumRc = Math.max(-10, f - 1200, 1 - put);
+    const maximumRc = Math.min(300, f + 1200, call - 1);
+    const rc = randomInteger(minimumRc, maximumRc);
+    const parity = f - rc;
+    const strike = randomInteger(4000, 15000);
+    const stock = strike + parity;
+    const bw = put + rc;
+    const ps = put + parity;
+
+    return valuesFromCents({ stock, strike, parity, rc, call, put, straddle, bw, ps });
+  }
+
+  function createValues(target) {
+    if (target === 'straddle') return createStraddleValues();
+
     // Generate internally consistent, cent-exact values. Parity is Stock - Strike.
     for (;;) {
       const strike = randomCents(40, 150);
@@ -112,12 +169,12 @@
   }
 
   function createRound() {
-    const values = createValues();
     const questionBank = enabledTargets.flatMap((target) => (
       clueVariants(target).map((variant) => ({ target, ...variant }))
     ));
     // Every enabled question variant has the same probability of being selected.
     const question = choose(questionBank);
+    const values = createValues(question.target);
     return {
       values,
       target: question.target,
@@ -131,24 +188,27 @@
     currentRound = createRound();
     priceTableBody.replaceChildren();
 
-    for (const key of currentRound.clues) {
+    const instruments = shuffle([
+      ...currentRound.clues.map((key) => ({ key, isQuestion: false })),
+      { key: currentRound.target, isQuestion: true },
+    ]);
+
+    for (const instrument of instruments) {
       const row = document.createElement('tr');
       const labelCell = document.createElement('td');
       const valueCell = document.createElement('td');
-      labelCell.textContent = labels[key];
-      valueCell.textContent = formatMoney(currentRound.values[key]);
+      labelCell.textContent = labels[instrument.key];
+
+      if (instrument.isQuestion) {
+        row.className = 'question-row';
+        valueCell.textContent = '?';
+      } else {
+        valueCell.textContent = formatMoney(currentRound.values[instrument.key]);
+      }
+
       row.append(labelCell, valueCell);
       priceTableBody.append(row);
     }
-
-    const answerRow = document.createElement('tr');
-    answerRow.className = 'question-row';
-    const answerLabel = document.createElement('td');
-    const answerValue = document.createElement('td');
-    answerLabel.textContent = labels[currentRound.target];
-    answerValue.textContent = '?';
-    answerRow.append(answerLabel, answerValue);
-    priceTableBody.append(answerRow);
 
     answerInput.value = '';
     answerInput.placeholder = labels[currentRound.target];
