@@ -57,65 +57,27 @@
     const maxCents = Math.round(maximum * 100);
     return (minCents + Math.floor(Math.random() * (maxCents - minCents + 1))) / 100;
   };
-  const randomInteger = (minimum, maximum) => (
-    minimum + Math.floor(Math.random() * (maximum - minimum + 1))
-  );
-  const fromCents = (cents) => cents / 100;
-
-  const randomIntegerWithParity = (minimum, maximum, parity) => {
-    let first = minimum;
-    if (((first % 2) + 2) % 2 !== parity) first += 1;
-    return first + 2 * randomInteger(0, Math.floor((maximum - first) / 2));
-  };
-
-  function valuesFromCents({ stock, strike, parity, rc, call, put, straddle, bw, ps }) {
-    return {
-      stock: fromCents(stock),
-      strike: fromCents(strike),
-      parity: fromCents(parity),
-      rc: fromCents(rc),
-      call: fromCents(call),
-      put: fromCents(put),
-      straddle: fromCents(straddle),
-      bw: fromCents(bw),
-      ps: fromCents(ps),
-    };
-  }
-
-  function createStraddleValues() {
-    // Straddle is assigned first. Matching its cent parity with F guarantees
-    // that (Straddle + F) / 2 and (Straddle - F) / 2 are whole-cent values.
-    const straddle = randomInteger(2, 5500);
-    const minimumF = Math.max(straddle - 4000, 2 - straddle, -1210);
-    const maximumF = Math.min(straddle, 7000 - straddle, 1500);
-    const straddleParity = ((straddle % 2) + 2) % 2;
-    const f = randomIntegerWithParity(minimumF, maximumF, straddleParity);
-
-    const call = (straddle + f) / 2;
-    const put = (straddle - f) / 2;
-    const minimumRc = Math.max(-10, f - 1200, 1 - put);
-    const maximumRc = Math.min(300, f + 1200, call - 1);
-    const rc = randomInteger(minimumRc, maximumRc);
-    const parity = f - rc;
-    const strike = randomInteger(4000, 15000);
-    const stock = strike + parity;
-    const bw = put + rc;
-    const ps = put + parity;
-
-    return valuesFromCents({ stock, strike, parity, rc, call, put, straddle, bw, ps });
-  }
 
   function createValues(target) {
-    if (target === 'straddle') return createStraddleValues();
-
     // Generate internally consistent, cent-exact values. Parity is Stock - Strike.
     for (;;) {
       const strike = randomCents(40, 150);
       const parity = randomCents(-12, 12);
       const stock = roundMoney(strike + parity);
       const rc = randomCents(-0.10, 3);
-      const put = randomCents(0, 20);
-      const call = roundMoney(put + parity + rc);
+      let call;
+      let put;
+
+      if (target === 'straddle') {
+        // TraderPrep ordering: generate Call, derive Put through PCP, then add them.
+        const forward = roundMoney(parity + rc);
+        call = randomCents(Math.max(0.01, forward), forward + 20);
+        put = roundMoney(call - forward);
+      } else {
+        put = randomCents(0, 20);
+        call = roundMoney(put + parity + rc);
+      }
+
       const straddle = roundMoney(call + put);
       const bw = roundMoney(call - parity);
       const ps = roundMoney(call - rc);

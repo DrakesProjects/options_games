@@ -1,0 +1,76 @@
+.pcp2-setup-box {
+  width: min(100%, 28rem);
+}
+
+.pcp2-mode-note {
+  max-width: 21rem;
+  text-align: center;
+  line-height: 1.45;
+}
+
+.mode-display {
+  color: #666;
+}
+
+#game-screen .pcp2-card {
+  width: min(94vw, 54rem);
+  padding: clamp(1.75rem, 3vw, 2.75rem);
+}
+
+.pcp2-contracts {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem 0.8rem;
+  margin-bottom: 1.35rem;
+  color: #555;
+  font-size: 0.9rem;
+  line-height: 1.45;
+}
+
+.pcp2-contracts span:not(:last-child)::after {
+  content: ' ·';
+  color: #aaa;
+}
+
+.pcp2-contracts:empty {
+  display: none;
+}
+
+#game-screen .pcp2-price-table {
+  margin-bottom: 1.4rem;
+}
+
+#game-screen .pcp2-price-table td:first-child {
+  width: 70%;
+  padding-right: 1.25rem;
+}
+
+#end-screen .missed-answer {
+  white-space: pre-line;
+}
+
+#game-screen .answer-row {
+  flex-wrap: wrap;
+}
+
+#game-screen .pcp2-price-table td {
+  overflow-wrap: anywhere;
+}
+
+@media (max-width: 620px) {
+  .top-bar-right {
+    font-size: 0.9rem;
+  }
+
+  #game-screen .pcp2-card {
+    padding: 1.4rem;
+  }
+
+  #game-screen .pcp2-price-table td:first-child {
+    width: 63%;
+  }
+
+  .pcp2-contracts {
+    font-size: 0.8rem;
+  }
+}

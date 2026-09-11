@@ -3,33 +3,35 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Put-Call Parity</title>
+  <title>PCP 2</title>
   <link rel="stylesheet" href="../style.css">
   <link rel="stylesheet" href="stats.css">
+  <link rel="stylesheet" href="pcp2.css">
 </head>
-<body class="game-page" data-stats-game="parity">
+<body class="game-page" data-stats-game="pcp-2">
 
-  <!-- Always-visible top bar -->
   <div class="top-bar">
     <div class="top-bar-left">
-      <span class="top-bar-title">Put-Call Parity</span>
+      <span class="top-bar-title">PCP 2</span>
       <a href="../index.html" class="back-link">← Back</a>
     </div>
     <div id="top-bar-right" class="top-bar-right hidden">
+      <span id="mode-display" class="mode-display">Medium</span>
+      <span aria-hidden="true">·</span>
       <span class="score-display">Score: <span id="score-value">0</span></span>
     </div>
   </div>
 
-  <!-- Timer bar (only visible during game) -->
   <div id="timer-wrap" class="timer-bar-wrap hidden">
     <div id="timer-bar" class="timer-bar" style="width:100%"></div>
   </div>
   <div id="timer-label" class="timer-label hidden"></div>
 
-  <!-- Setup screen -->
   <div id="setup-screen" class="setup-overlay">
-    <div class="setup-box">
-      <label class="setup-label">Session duration</label>
+    <div class="setup-box pcp2-setup-box">
+      <p class="setup-identity">C − P = S − K + r/c</p>
+
+      <label class="setup-label" for="duration-select">Session duration</label>
       <select id="duration-select" class="duration-select">
         <option value="60">1 min</option>
         <option value="120" selected>2 min</option>
@@ -40,26 +42,25 @@
         <option value="3600">60 min</option>
       </select>
 
-      <label class="setup-label">Relationships</label>
-      <div class="setup-checklist">
-        <label>
-          <input id="straddle-check" type="checkbox" checked>
-          Straddle
-        </label>
-        <label>
-          <input id="covered-check" type="checkbox" checked>
-          B/W + P&amp;S
-        </label>
-      </div>
+      <label class="setup-label" for="mode-select">Mode</label>
+      <select id="mode-select" class="duration-select mode-select">
+        <option value="medium" selected>Medium</option>
+        <option value="hard">Hard</option>
+      </select>
+
+      <p id="mode-note" class="setup-note pcp2-mode-note">
+        Structure relationships and their rearrangements.
+      </p>
 
       <button id="start-btn" class="btn">Start</button>
     </div>
   </div>
 
-  <!-- Game screen -->
   <div id="game-screen" class="game-center hidden">
-    <div class="round-card">
-      <table class="price-table">
+    <div class="round-card pcp2-card">
+      <div id="contract-info" class="pcp2-contracts"></div>
+
+      <table class="price-table pcp2-price-table">
         <tbody id="price-table-body"></tbody>
       </table>
 
@@ -71,15 +72,18 @@
           step="0.01"
           placeholder="$0.00"
           autocomplete="off"
+          inputmode="decimal"
+          aria-label="Answer"
+          aria-describedby="feedback"
         >
         <button id="submit-btn" class="btn">Submit</button>
       </div>
 
-      <div id="feedback" class="feedback"></div>
+      <div id="feedback" class="feedback" aria-live="polite"></div>
+
     </div>
   </div>
 
-  <!-- End screen -->
   <div id="end-screen" class="game-center hidden">
     <div class="end-box">
       <h2>Time's up</h2>
@@ -92,7 +96,10 @@
     </div>
   </div>
 
-  <script src="parity.js"></script>
+  <script src="pcp2-medium.js"></script>
+  <script src="pcp2-hard.js"></script>
+  <script src="pcp2-bank.js"></script>
+  <script src="pcp2.js"></script>
   <script src="stats.js"></script>
 </body>
 </html>
