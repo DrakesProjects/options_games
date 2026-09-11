@@ -311,57 +311,42 @@
     const [a, b, c] = raw.map(Number);
     const k = (value) => `K${subscript(context.strikes.indexOf(value) + 1)}`;
     const t = (value) => `T${subscript(context.expiries.indexOf(value) + 1)}`;
-    const atTime = (value) => context.expiries.length > 1 ? ` · ${t(value)}` : '';
-    const prefix = (name, strikes) => {
-      if (!strikes) return name;
-      const text = ['B/W', 'P&S'].includes(name) ? name : name[0].toLowerCase() + name.slice(1);
-      return `${strikes} ${text}`;
+    const atTime = (value) => context.expiries.length > 1 ? t(value) : '';
+    const describe = (name, strikes = '', time = '') => {
+      const text = (strikes || time) && !['B/W', 'P&S'].includes(name)
+        ? name[0].toLowerCase() + name.slice(1) : name;
+      return [time, strikes, text].filter(Boolean).join(' ');
     };
-    const atStrike = (name) => prefix(name,
-      context.strikes.length > 1 && !isObviousWing(key, context.keys || []) ? k(a) : '');
-    // Two ordered strikes have one conventional high/low pair. Three strikes
-    // have several possible intervals, so name the pair in that case.
-    const atPair = (name) => prefix(name, context.strikes.length > 2 ? `${k(a)} − ${k(b)}` : '');
+    // Once a question uses multiple contracts, label every applicable row
+    // consistently rather than asking the player to infer individual legs.
+    const strike = context.strikes.length > 1 ? k(a) : '';
+    const pair = context.strikes.length > 1 ? `${k(a)} − ${k(b)}` : '';
+    const flyStrikes = () => [1, 2, 3].map(k).join(' − ');
     const optionNames = { call: 'Call', put: 'Put', combo: 'Combo', straddle: 'Straddle', bw: 'B/W', ps: 'P&S' };
-    if (optionNames[kind]) return `${atStrike(optionNames[kind])}${atTime(b)}`;
+    if (optionNames[kind]) return describe(optionNames[kind], strike, atTime(b));
     switch (kind) {
       case 'stock': return 'Stock';
       case 'strike': return context.strikes.length > 1 ? k(a) : 'Strike';
-      case 'parity': return atStrike('Parity');
-      case 'rc': return `r/c${context.expiries.length > 1 ? subscript(context.expiries.indexOf(a) + 1) : ''}`;
-      case 'reversal': return `Reversal${atTime(a)}`;
-      case 'conversion': return `Conversion${atTime(a)}`;
-      case 'box': return atPair('Box');
-      case 'risky': return `${atPair('Risky')}${atTime(c)}`;
-      case 'strangle': return `${atPair('Strangle')}${atTime(c)}`;
-      case 'cv': return `${atPair(aliases[key] || 'Call vertical')}${atTime(c)}`;
-      case 'pv': return `${atPair('Put vertical')}${atTime(c)}`;
-      case 'swap': return `${k(a)} − ${k(b)} straddle swap${atTime(c)}`;
-      case 'ct': return `${atStrike('Call spread')} · ${t(c)} − ${t(b)}`;
-      case 'pt': return `${atStrike('Put spread')} · ${t(c)} − ${t(b)}`;
-      case 'jelly': return 'Jelly roll';
-      case 'butterfly': return `Butterfly${atTime(a)}`;
-      case 'iron': return `Iron fly${atTime(a)}`;
+      case 'parity': return describe('Parity', strike);
+      case 'rc': return describe('r/c', '', atTime(a));
+      case 'reversal': return describe('Reversal', '', atTime(a));
+      case 'conversion': return describe('Conversion', '', atTime(a));
+      case 'box': return describe('Box', pair);
+      case 'risky': return describe('Risky', pair, atTime(c));
+      case 'strangle': return describe('Strangle', pair, atTime(c));
+      case 'cv': return describe(aliases[key] || 'Call vertical', pair, atTime(c));
+      case 'pv': return describe('Put vertical', pair, atTime(c));
+      case 'swap': return describe('Straddle swap', pair, atTime(c));
+      case 'ct': return describe('Call spread', strike, `${t(c)} − ${t(b)}`);
+      case 'pt': return describe('Put spread', strike, `${t(c)} − ${t(b)}`);
+      case 'jelly': return describe('Jelly roll', '', `${t(a)} − ${t(b)}`);
+      case 'butterfly': return describe('Butterfly', flyStrikes(), atTime(a));
+      case 'iron': return describe('Iron fly', flyStrikes(), atTime(a));
       default: throw new Error(`Missing label for ${key}`);
     }
   }
 
   const subscript = (number) => String(number).replace(/\d/g, (digit) => '₀₁₂₃₄₅₆₇₈₉'[Number(digit)]);
-
-  function isObviousWing(key, keys) {
-    const [kind, strike, expiry] = key.split(':');
-    if (!['call', 'put'].includes(kind) || keys.length === 0) return false;
-    // A simple outside-pair split identifies its call and put wings. Once
-    // other structures or same-kind premiums appear, retain explicit strikes.
-    if (keys.some((item) => !['call', 'put', 'strangle', 'risky'].includes(item.split(':')[0]))) return false;
-    const options = keys.filter((item) => item.startsWith(`${kind}:`));
-    if (options.some((item) => item.split(':')[1] !== strike)) return false;
-    const pairs = keys.filter((item) => ['strangle', 'risky'].includes(item.split(':')[0]));
-    return pairs.length > 0 && pairs.every((item) => {
-      const [, high, low, time] = item.split(':');
-      return (kind === 'call' ? high : low) === strike && time === expiry;
-    });
-  }
 
   const isOverQuote = (key) => ['combo', 'risky'].includes(key.split(':')[0]);
   const money = (cents) => `${cents < 0 ? '−' : ''}$${(Math.abs(cents) / 100).toFixed(2)}`;
@@ -384,16 +369,19 @@
       if (key.startsWith('cv:') && random() < 0.25) aliases[key] = 'Synthetic call vertical';
     }
     const values = allKeys.map((key) => valueOf(key, state));
-    const labels = allKeys.map((key) => labelOf(key, context, aliases));
     // Keep unknown combo/risky targets in the signed c/o convention. Choosing
     // their direction from the hidden answer would reveal its sign.
-    if (isOverQuote(family.keys[targetIndex])) labels[targetIndex] += ' (c/o)';
+    const quotes = allKeys.map((key, index) => isOverQuote(key)
+      ? (index === targetIndex || values[index] >= 0 ? 'c/o' : 'p/o') : null);
+    const labels = allKeys.map((key, index) => (
+      `${labelOf(key, context, aliases)}${quotes[index] ? ` ${quotes[index]}` : ''}`
+    ));
     const targetCoefficient = family.coefficients[targetIndex];
     const terms = family.keys.flatMap((key, index) => index === targetIndex ? [] : [{
       key,
       label: labels[index],
       value: values[index],
-      ...(isOverQuote(key) ? { quote: values[index] < 0 ? 'p/o' : 'c/o' } : {}),
+      ...(quotes[index] ? { quote: quotes[index] } : {}),
       numerator: -family.coefficients[index],
     }]);
     const numerator = terms.reduce((sum, term) => sum + term.numerator * term.value, 0);
@@ -403,7 +391,7 @@
     const formulaTerms = terms.map((term, index) => {
       const coefficient = term.numerator * Math.sign(targetCoefficient) * (term.quote === 'p/o' ? -1 : 1);
       const sign = coefficient < 0 ? '− ' : (index === 0 ? '' : '+ ');
-      return `${sign}${Math.abs(coefficient) === 1 ? '' : `${Math.abs(coefficient)} × `}${term.label}${term.quote ? ` (${term.quote})` : ''}`;
+      return `${sign}${Math.abs(coefficient) === 1 ? '' : `${Math.abs(coefficient)} × `}${term.label}`;
     });
     const divisor = Math.abs(targetCoefficient);
     const formula = `${labels[targetIndex]} = ${divisor === 1 ? '' : '('}${formulaTerms.join(' ')}${divisor === 1 ? '' : `) / ${divisor}`}`;
@@ -413,7 +401,7 @@
         key,
         label: labels[position],
         value: values[position],
-        ...(isOverQuote(key) ? { quote: values[position] < 0 ? 'p/o' : 'c/o' } : {}),
+        ...(quotes[position] ? { quote: quotes[position] } : {}),
       };
     });
     const contractInfo = [];

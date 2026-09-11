@@ -17,7 +17,7 @@ All games offer 1, 2, 5, 10, 15, 30, or 60-minute sessions. Completed nonzero-sc
 - `C − P = S − K + r/c`; parity is `S − K`.
 - Straddle = `C + P`; B/W = `P + r/c`; P&S = `C − r/c`.
 - Generated prices are cent-exact, with Put between $0–$20 and r/c between −$0.10–$3.00.
-- PCP 2 strikes follow `K₁ > K₂ > K₃`; expirations follow `T₁ < T₂`. Strike labels appear where needed, and equal spacing is stated when required.
+- PCP 2 rows read time → strike(s) → name → c/o or p/o → price. Single-strike/expiry labels are omitted; with multiple strikes/expirations, every applicable row is labeled. Strikes follow `K₁ > K₂ > K₃` and expirations `T₁ < T₂`; required equal spacing is stated.
 - `K₁ − K₂ straddle swap` means long the first strike's straddle, short the second's.
 - Combo/risky quotes use `c/o` or `p/o`; unknowns use signed c/o answers.
 

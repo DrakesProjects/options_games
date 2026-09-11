@@ -79,7 +79,7 @@ function setup({ realBank = false, overQuotes = false } = {}) {
         family: 'Hidden family',
         contractInfo: ['K1 > K2', 'T1 < T2'],
         givens: overQuotes
-          ? [{ label: 'Combo', value: -175, quote: 'p/o' }, { label: 'Risky', value: 225, quote: 'c/o' }]
+          ? [{ label: 'T₁ K₁ combo p/o', value: -175, quote: 'p/o' }, { label: 'T₂ K₁ − K₂ risky c/o', value: 225, quote: 'c/o' }]
           : [{ label: 'Call', value: 300 }, { label: 'Put', value: 200 }],
         targetLabel: `Target ${questions.length}`,
         answer: [0, -175, 125][questions.length % 3],
@@ -139,14 +139,14 @@ test('blank and nonfinite answers never count as zero; wrong answers allow unlim
   assert.equal(game.element('feedback').textContent, '');
 });
 
-test('over quotes display positive magnitudes with c/o or p/o', () => {
+test('over quotes put c/o or p/o after the name and keep the price column numeric', () => {
   const game = setup({ overQuotes: true });
   game.start();
   const rows = game.element('price-table-body').children;
-  const combo = rows.find((row) => row.children[0].textContent === 'Combo');
-  const risky = rows.find((row) => row.children[0].textContent === 'Risky');
-  assert.equal(combo.children[1].textContent, '$1.75 p/o');
-  assert.equal(risky.children[1].textContent, '$2.25 c/o');
+  const combo = rows.find((row) => row.children[0].textContent === 'T₁ K₁ combo p/o');
+  const risky = rows.find((row) => row.children[0].textContent === 'T₂ K₁ − K₂ risky c/o');
+  assert.equal(combo.children[1].textContent, '$1.75');
+  assert.equal(risky.children[1].textContent, '$2.25');
   assert.equal(game.questions[0].givens[0].value, -175);
 });
 
@@ -230,7 +230,7 @@ for (const mode of ['medium', 'hard']) {
       for (const clue of question.givens) {
         const row = rows.find((item) => item.children[0].textContent === clue.label);
         assert.ok(row, `${question.id}: missing clue ${clue.label}`);
-        const formatted = `${clue.value < 0 && !clue.quote ? '-' : ''}$${(Math.abs(clue.value) / 100).toFixed(2)}${clue.quote ? ` ${clue.quote}` : ''}`;
+        const formatted = `${clue.value < 0 && !clue.quote ? '-' : ''}$${(Math.abs(clue.value) / 100).toFixed(2)}`;
         assert.equal(row.children[1].textContent, formatted);
       }
 

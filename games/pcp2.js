@@ -55,8 +55,8 @@
       const labelCell = document.createElement('td');
       const valueCell = document.createElement('td');
       labelCell.textContent = instrument.label;
-      valueCell.textContent = instrument.unknown ? '?' : instrument.quote
-        ? `${money(Math.abs(instrument.value))} ${instrument.quote}` : money(instrument.value);
+      valueCell.textContent = instrument.unknown ? '?'
+        : money(instrument.quote ? Math.abs(instrument.value) : instrument.value);
       if (instrument.unknown) row.className = 'question-row';
       row.append(labelCell, valueCell);
       return row;

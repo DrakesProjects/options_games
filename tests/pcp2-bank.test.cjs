@@ -117,7 +117,7 @@ test('extra quotes use the same cent-exact market and consistent contract labels
     const context = { ...bank.contractIndices(keys), keys };
     for (const given of question.givens) {
       const aliases = given.label.toLowerCase().includes('synthetic call vertical') ? { [given.key]: 'Synthetic call vertical' } : {};
-      assert.equal(given.label, bank.labelOf(given.key, context, aliases));
+      assert.equal(given.label, `${bank.labelOf(given.key, context, aliases)}${given.quote ? ` ${given.quote}` : ''}`);
     }
     const displayedStrikePrices = context.strikes.map((strike) => state.strikes[strike - 1]);
     assert.ok(displayedStrikePrices.every((strike, i) => i === 0 || displayedStrikePrices[i - 1] > strike));
@@ -186,38 +186,73 @@ test('contract labels remap only the strikes and expirations actually present', 
   const keys = ['strangle:1:3:2', 'risky:1:3:2', 'call:1:2'];
   assert.deepEqual(bank.contractIndices(keys), { strikes: [1, 3], expiries: [2] });
   const context = { ...bank.contractIndices(keys), keys };
-  assert.equal(bank.labelOf('strangle:1:3:2', context), 'Strangle');
-  assert.equal(bank.labelOf('call:1:2', context), 'Call');
+  assert.equal(bank.labelOf('strangle:1:3:2', context), 'K₁ − K₂ strangle');
+  assert.equal(bank.labelOf('call:1:2', context), 'K₁ call');
   const calendar = bank.contractIndices(['put:2:1', 'put:2:2', 'pt:2:1:2']);
-  assert.equal(bank.labelOf('put:2:1', calendar), 'Put · T₁');
-  assert.equal(bank.labelOf('pt:2:1:2', calendar), 'Put spread · T₂ − T₁');
+  assert.equal(bank.labelOf('put:2:1', calendar), 'T₁ put');
+  assert.equal(bank.labelOf('pt:2:1:2', calendar), 'T₂ − T₁ put spread');
+  const single = bank.contractIndices(['call:2:2', 'put:2:2', 'rc:2']);
+  assert.equal(bank.labelOf('call:2:2', single), 'Call');
+  assert.equal(bank.labelOf('put:2:2', single), 'Put');
+  assert.equal(bank.labelOf('rc:2', single), 'r/c');
 });
 
-test('strike prefixes appear only when the contract assignment needs them', () => {
+test('multiple strikes are labeled consistently on every strike-dependent structure', () => {
   const label = (key, keys) => bank.labelOf(key, { ...bank.contractIndices(keys), keys });
   const vertical = ['cv:1:2:1', 'call:1:1', 'call:2:1'];
-  assert.equal(label(vertical[0], vertical), 'Call vertical');
+  assert.equal(label(vertical[0], vertical), 'K₁ − K₂ call vertical');
   assert.equal(label(vertical[1], vertical), 'K₁ call');
   assert.equal(label(vertical[2], vertical), 'K₂ call');
   const wings = ['strangle:1:2:1', 'call:1:1', 'put:2:1'];
-  assert.equal(label(wings[1], wings), 'Call');
-  assert.equal(label(wings[2], wings), 'Put');
+  assert.equal(label(wings[1], wings), 'K₁ call');
+  assert.equal(label(wings[2], wings), 'K₂ put');
   const wrongWing = ['strangle:1:2:1', 'call:2:1'];
   assert.equal(label(wrongWing[1], wrongWing), 'K₂ call');
   const mixed = ['strangle:1:2:1', 'call:1:1', 'straddle:2:1'];
   assert.equal(label(mixed[1], mixed), 'K₁ call');
   const fly = ['iron:1', 'straddle:2:1', 'strangle:1:3:1'];
-  assert.equal(label(fly[0], fly), 'Iron fly');
+  assert.equal(label(fly[0], fly), 'K₁ − K₂ − K₃ iron fly');
   assert.equal(label(fly[1], fly), 'K₂ straddle');
   assert.equal(label(fly[2], fly), 'K₁ − K₃ strangle');
   const adjacent = ['butterfly:1', 'strangle:1:2:1', 'strangle:2:3:1'];
-  assert.equal(label(adjacent[0], adjacent), 'Butterfly');
+  assert.equal(label(adjacent[0], adjacent), 'K₁ − K₂ − K₃ butterfly');
   assert.equal(label(adjacent[1], adjacent), 'K₁ − K₂ strangle');
   assert.equal(label(adjacent[2], adjacent), 'K₂ − K₃ strangle');
   const swap = ['swap:1:2:1', 'straddle:1:1', 'straddle:2:1'];
   assert.equal(label(swap[0], swap), 'K₁ − K₂ straddle swap');
   const reversedSwap = ['swap:2:1:1', 'straddle:1:1', 'straddle:2:1'];
   assert.equal(label(reversedSwap[0], reversedSwap), 'K₂ − K₁ straddle swap');
+});
+
+test('time precedes strikes and name while independent quantities omit inapplicable labels', () => {
+  const context = { strikes: [1, 2, 3], expiries: [1, 2] };
+  const examples = {
+    'call:1:2': 'T₂ K₁ call',
+    'put:2:1': 'T₁ K₂ put',
+    'combo:2:1': 'T₁ K₂ combo',
+    'straddle:1:2': 'T₂ K₁ straddle',
+    'bw:1:1': 'T₁ K₁ B/W',
+    'ps:1:1': 'T₁ K₁ P&S',
+    'rc:2': 'T₂ r/c',
+    'reversal:1': 'T₁ reversal',
+    'conversion:2': 'T₂ conversion',
+    'strangle:1:3:2': 'T₂ K₁ − K₃ strangle',
+    'risky:1:2:1': 'T₁ K₁ − K₂ risky',
+    'cv:1:2:1': 'T₁ K₁ − K₂ call vertical',
+    'pv:1:2:2': 'T₂ K₁ − K₂ put vertical',
+    'swap:2:1:2': 'T₂ K₂ − K₁ straddle swap',
+    'ct:1:1:2': 'T₂ − T₁ K₁ call spread',
+    'pt:2:1:2': 'T₂ − T₁ K₂ put spread',
+    'jelly:1:2': 'T₁ − T₂ jelly roll',
+    'butterfly:2': 'T₂ K₁ − K₂ − K₃ butterfly',
+    'iron:1': 'T₁ K₁ − K₂ − K₃ iron fly',
+    'box:1:2': 'K₁ − K₂ box',
+    'parity:2': 'K₂ parity',
+    'strike:1': 'K₁',
+    stock: 'Stock',
+  };
+  for (const [key, expected] of Object.entries(examples)) assert.equal(bank.labelOf(key, context), expected);
+  assert.equal(bank.labelOf('cv:1:2:1', context, { 'cv:1:2:1': 'Synthetic call vertical' }), 'T₁ K₁ − K₂ synthetic call vertical');
 });
 
 test('c/o and p/o quotes preserve algebraic signs and unknowns do not disclose their sign', () => {
@@ -232,9 +267,10 @@ test('c/o and p/o quotes preserve algebraic signs and unknowns do not disclose t
     signs.add(combo.quote);
     const quotedAmount = Math.abs(combo.value);
     assert.equal(question.answer, put.value + (combo.quote === 'p/o' ? -quotedAmount : quotedAmount));
-    if (combo.quote === 'p/o') assert.equal(question.steps[0], `${question.targetLabel} = − ${combo.label} (p/o) + ${put.label}`);
+    assert.ok(combo.label.endsWith(` ${combo.quote}`));
+    if (combo.quote === 'p/o') assert.equal(question.steps[0], `${question.targetLabel} = − ${combo.label} + ${put.label}`);
     const target = bank.questionFor(family, 0, random);
-    assert.ok(target.targetLabel.endsWith(' (c/o)'));
+    assert.ok(target.targetLabel.endsWith(' c/o'));
   }
   assert.deepEqual([...signs].sort(), ['c/o', 'p/o']);
 });
