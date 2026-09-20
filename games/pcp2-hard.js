@@ -165,7 +165,7 @@
         "parity:1",
         "bw:2:1",
         "pv:1:2:1",
-        "jelly:1:2",
+        "jelly:1:1:2",
         "rc:2"
       ],
       "route": "Carry versus parity in covered structures → B/W difference forms put vertical → Jelly reconstructs carry"
@@ -282,7 +282,7 @@
         "ct:2:1:2",
         "ct:3:1:2",
         "pt:1:1:2",
-        "jelly:1:2"
+        "jelly:1:1:2"
       ],
       "equalSpacing": true,
       "route": "Call verticals form butterfly → Butterfly transported through three call calendars → Jelly converts call/put calendars"
@@ -296,7 +296,7 @@
         "risky:1:3:1",
         "pv:2:3:1",
         "combo:2:2",
-        "jelly:1:2"
+        "jelly:2:1:2"
       ],
       "route": "Low-strike straddle to strangle → Outside risky via middle combo → Jelly transports combo"
     },
@@ -309,7 +309,7 @@
         "cv:1:2:2",
         "ct:2:1:2",
         "pt:1:1:2",
-        "jelly:1:2"
+        "jelly:1:1:2"
       ],
       "route": "Box converts call/put verticals → Call vertical transported through call calendars → Jelly converts call/put calendars"
     },
@@ -322,7 +322,7 @@
         "swap:1:2:2",
         "ct:2:1:2",
         "pt:1:1:2",
-        "jelly:1:2"
+        "jelly:1:1:2"
       ],
       "route": "Straddle swap separates verticals → Straddle swap transported through call calendars → Jelly converts call/put calendars"
     },
@@ -335,7 +335,7 @@
         "pv:1:2:2",
         "pt:2:1:2",
         "ct:1:1:2",
-        "jelly:1:2"
+        "jelly:1:1:2"
       ],
       "route": "High-strike straddle to strangle → Put vertical transported through put calendars → Jelly converts call/put calendars"
     },
@@ -349,7 +349,7 @@
         "pt:2:1:2",
         "pt:3:1:2",
         "ct:1:1:2",
-        "jelly:1:2"
+        "jelly:1:1:2"
       ],
       "equalSpacing": true,
       "route": "Put verticals form butterfly → Butterfly transported through three put calendars → Jelly converts call/put calendars"
@@ -363,7 +363,7 @@
         "ct:1:1:2",
         "pt:2:1:2",
         "combo:1:2",
-        "jelly:1:2"
+        "jelly:1:1:2"
       ],
       "route": "High-strike combo to risky → Risky transported through opposite option calendars → Jelly transports combo"
     },
@@ -376,7 +376,7 @@
         "strangle:1:3:2",
         "pt:3:1:2",
         "pt:1:1:2",
-        "jelly:1:2"
+        "jelly:1:1:2"
       ],
       "equalSpacing": true,
       "route": "Wing strangle subtracts from middle straddle → Strangle transported through wing calendars → Jelly converts call/put calendars"
@@ -390,7 +390,7 @@
         "risky:1:2:2",
         "pt:2:1:2",
         "pt:1:1:2",
-        "jelly:1:2"
+        "jelly:1:1:2"
       ],
       "equalSpacing": true,
       "route": "Adjacent riskies form iron fly → Risky transported through opposite option calendars → Jelly converts call/put calendars"
@@ -404,7 +404,7 @@
         "bw:3:1",
         "bw:1:2",
         "pt:1:1:2",
-        "jelly:1:2"
+        "jelly:1:1:2"
       ],
       "equalSpacing": true,
       "route": "B/W curve reconstructs butterfly → Call calendar transports B/W → Jelly converts call/put calendars"
@@ -418,7 +418,7 @@
         "ps:3:1",
         "ps:1:2",
         "ct:1:1:2",
-        "jelly:1:2"
+        "jelly:1:1:2"
       ],
       "equalSpacing": true,
       "route": "P&S curve reconstructs butterfly → Put calendar transports P&S → Jelly converts call/put calendars"
@@ -432,7 +432,7 @@
         "cv:1:2:1",
         "pv:2:3:1",
         "combo:1:2",
-        "jelly:1:2"
+        "jelly:1:1:2"
       ],
       "route": "Combos locate strike width → Outside risky via middle combo → Jelly transports combo"
     },
@@ -445,7 +445,7 @@
         "cv:1:2:2",
         "ct:2:1:2",
         "pt:1:1:2",
-        "jelly:1:2"
+        "jelly:1:1:2"
       ],
       "equalSpacing": true,
       "route": "Iron fly mixes adjacent verticals → Call vertical transported through call calendars → Jelly converts call/put calendars"
@@ -455,7 +455,7 @@
       "name": "Call-premium calendar and fly carry",
       "keys": [
         "pt:1:1:2",
-        "jelly:1:2",
+        "jelly:1:1:2",
         "butterfly:1",
         "butterfly:2",
         "ct:3:1:2",
@@ -472,7 +472,7 @@
         "bw:1:1",
         "ps:1:1",
         "parity:1",
-        "jelly:1:2",
+        "jelly:1:1:2",
         "bw:1:2",
         "put:1:2"
       ],
@@ -483,7 +483,7 @@
       "name": "Put-premium calendar and fly carry",
       "keys": [
         "ct:1:1:2",
-        "jelly:1:2",
+        "jelly:1:1:2",
         "butterfly:1",
         "butterfly:2",
         "pt:3:1:2",

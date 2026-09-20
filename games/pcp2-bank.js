@@ -58,9 +58,12 @@
       case 'cv': return combine([1, call(b, c)], [-1, call(a, c)]);
       case 'pv': return combine([1, put(a, c)], [-1, put(b, c)]);
       case 'swap': return combine([1, straddle(a, c)], [-1, straddle(b, c)]);
-      case 'ct': return combine([1, call(a, c)], [-1, call(a, b)]);
-      case 'pt': return combine([1, put(a, c)], [-1, put(a, b)]);
-      case 'jelly': return combine([1, unit(`R${a}`)], [-1, unit(`R${b}`)]);
+      // A bought time spread is long the front expiry and short the back.
+      case 'ct': return combine([1, call(a, b)], [-1, call(a, c)]);
+      case 'pt': return combine([1, put(a, b)], [-1, put(a, c)]);
+      // Jelly roll keys carry strike, earlier expiry, later expiry. Its
+      // same-strike combos reduce to the carry difference at any strike.
+      case 'jelly': return combine([1, unit(`R${b}`)], [-1, unit(`R${c}`)]);
       case 'butterfly': return combine([1, call(1, a)], [-2, call(2, a)], [1, call(3, a)]);
       case 'iron': return combine([1, call(2, a)], [1, put(2, a)], [-1, call(1, a)], [-1, put(3, a)]);
       default: throw new Error(`Unknown PCP 2 instrument: ${key}`);
@@ -236,8 +239,7 @@
         strikes.add(a); strikes.add(b);
         if (c) expiries.add(c);
       }
-      if (['ct', 'pt'].includes(kind)) { strikes.add(a); expiries.add(b); expiries.add(c); }
-      if (kind === 'jelly') { expiries.add(a); expiries.add(b); }
+      if (['ct', 'pt', 'jelly'].includes(kind)) { strikes.add(a); expiries.add(b); expiries.add(c); }
       if (['butterfly', 'iron'].includes(kind)) { [1, 2, 3].forEach((k) => strikes.add(k)); expiries.add(a); }
     }
     return { strikes: [...strikes].sort(), expiries: [...expiries].sort() };
@@ -264,7 +266,10 @@
       for (let low = high + 1; low <= 3; low += 1) keys.push(`box:${high}:${low}`);
       for (const kind of ['ct', 'pt']) keys.push(`${kind}:${high}:1:2`);
     }
-    keys.push('jelly:1:2');
+    // One jelly-roll candidate, at an existing strike where possible, keeps
+    // equivalent strikes from adding duplicate sampling weight.
+    const jellyStrike = contractIndices(family.keys).strikes[0] || 1;
+    keys.push(`jelly:${jellyStrike}:1:2`);
 
     const span = family.vectors.reduce((current, vector) => extendSpan(current, vector) || current, []);
     const candidates = keys.filter((key) => !family.keys.includes(key)).map((key) => ({
@@ -337,9 +342,9 @@
       case 'cv': return describe(aliases[key] || 'Call vertical', pair, atTime(c));
       case 'pv': return describe('Put vertical', pair, atTime(c));
       case 'swap': return describe('Straddle swap', pair, atTime(c));
-      case 'ct': return describe('Call spread', strike, `${t(c)} − ${t(b)}`);
-      case 'pt': return describe('Put spread', strike, `${t(c)} − ${t(b)}`);
-      case 'jelly': return describe('Jelly roll', '', `${t(a)} − ${t(b)}`);
+      case 'ct': return describe('Call spread', strike, `${t(b)}${t(c)}`);
+      case 'pt': return describe('Put spread', strike, `${t(b)}${t(c)}`);
+      case 'jelly': return describe('Jelly roll', strike, `${t(b)}${t(c)}`);
       case 'butterfly': return describe('Butterfly', flyStrikes(), atTime(a));
       case 'iron': return describe('Iron fly', flyStrikes(), atTime(a));
       default: throw new Error(`Missing label for ${key}`);

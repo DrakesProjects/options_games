@@ -46,6 +46,23 @@
         <option value="both">Both</option>
       </select>
 
+      <div id="random-position-settings" class="random-position-settings hidden">
+        <label class="setup-label" for="max-options-select">Maximum options</label>
+        <select id="max-options-select" class="duration-select" aria-describedby="max-options-note">
+          <option value="1">1</option>
+          <option value="2">2</option>
+          <option value="3">3</option>
+          <option value="4" selected>4</option>
+          <option value="5">5</option>
+          <option value="6">6</option>
+          <option value="7">7</option>
+          <option value="8">8</option>
+          <option value="9">9</option>
+          <option value="10">10</option>
+        </select>
+        <p id="max-options-note" class="setup-note">Equal chance of 1 through the maximum. Stock doesn't count toward this limit.</p>
+      </div>
+
       <label class="setup-label">Greeks to be tested on</label>
       <div class="setup-checklist">
         <label><input type="checkbox" class="greek-check" value="delta"     checked> Delta</label>

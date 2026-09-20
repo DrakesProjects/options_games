@@ -190,7 +190,7 @@ test('contract labels remap only the strikes and expirations actually present', 
   assert.equal(bank.labelOf('call:1:2', context), 'K₁ call');
   const calendar = bank.contractIndices(['put:2:1', 'put:2:2', 'pt:2:1:2']);
   assert.equal(bank.labelOf('put:2:1', calendar), 'T₁ put');
-  assert.equal(bank.labelOf('pt:2:1:2', calendar), 'T₂ − T₁ put spread');
+  assert.equal(bank.labelOf('pt:2:1:2', calendar), 'T₁T₂ put spread');
   const single = bank.contractIndices(['call:2:2', 'put:2:2', 'rc:2']);
   assert.equal(bank.labelOf('call:2:2', single), 'Call');
   assert.equal(bank.labelOf('put:2:2', single), 'Put');
@@ -241,9 +241,10 @@ test('time precedes strikes and name while independent quantities omit inapplica
     'cv:1:2:1': 'T₁ K₁ − K₂ call vertical',
     'pv:1:2:2': 'T₂ K₁ − K₂ put vertical',
     'swap:2:1:2': 'T₂ K₂ − K₁ straddle swap',
-    'ct:1:1:2': 'T₂ − T₁ K₁ call spread',
-    'pt:2:1:2': 'T₂ − T₁ K₂ put spread',
-    'jelly:1:2': 'T₁ − T₂ jelly roll',
+    'ct:1:1:2': 'T₁T₂ K₁ call spread',
+    'pt:2:1:2': 'T₁T₂ K₂ put spread',
+    'jelly:1:1:2': 'T₁T₂ K₁ jelly roll',
+    'jelly:2:1:2': 'T₁T₂ K₂ jelly roll',
     'butterfly:2': 'T₂ K₁ − K₂ − K₃ butterfly',
     'iron:1': 'T₁ K₁ − K₂ − K₃ iron fly',
     'box:1:2': 'K₁ − K₂ box',
@@ -253,6 +254,51 @@ test('time precedes strikes and name while independent quantities omit inapplica
   };
   for (const [key, expected] of Object.entries(examples)) assert.equal(bank.labelOf(key, context), expected);
   assert.equal(bank.labelOf('cv:1:2:1', context, { 'cv:1:2:1': 'Synthetic call vertical' }), 'T₁ K₁ − K₂ synthetic call vertical');
+});
+
+test('jelly rolls retain their common strike in labels without changing their carry value', () => {
+  const state = bank.generateState(false, seededRandom(19387));
+  for (const strike of [1, 2, 3]) {
+    const key = `jelly:${strike}:1:2`;
+    assert.deepEqual(bank.contractIndices([key]), { strikes: [strike], expiries: [1, 2] });
+    assert.equal(bank.valueOf(key, state),
+      bank.valueOf(`combo:${strike}:1`, state) - bank.valueOf(`combo:${strike}:2`, state));
+    assert.equal(bank.valueOf(key, state), state.carries[0] - state.carries[1]);
+    assert.equal(bank.labelOf(key, bank.contractIndices([key])), 'T₁T₂ jelly roll');
+  }
+  const remapped = bank.contractIndices(['jelly:3:1:2', 'call:1:1']);
+  assert.equal(bank.labelOf('jelly:3:1:2', remapped), 'T₁T₂ K₂ jelly roll');
+
+  const family = bank.getBanks().medium.find((entry) => entry.id === 'straddle-time-put-jelly');
+  const target = bank.questionFor(family, 3, seededRandom(412));
+  assert.equal(target.targetLabel, 'T₁T₂ K₁ jelly roll');
+  assert.ok(target.steps[0].startsWith(`${target.targetLabel} = `));
+  const clue = bank.questionFor(family, 0, seededRandom(412));
+  const jelly = clue.givens.find((given) => given.key === 'jelly:1:1:2');
+  assert.equal(jelly.label, 'T₁T₂ K₁ jelly roll');
+  assert.ok(clue.steps[0].includes(jelly.label));
+});
+
+test('time spreads buy front and sell back, with consistent jelly-roll replication', () => {
+  const random = seededRandom(65291);
+  for (let sample = 0; sample < 100; sample += 1) {
+    const state = bank.generateState(sample % 2 === 0, random);
+    for (const strike of [1, 2, 3]) {
+      const callSpread = bank.valueOf(`ct:${strike}:1:2`, state);
+      const putSpread = bank.valueOf(`pt:${strike}:1:2`, state);
+      const jelly = bank.valueOf(`jelly:${strike}:1:2`, state);
+      assert.equal(callSpread, state.calls[0][strike - 1] - state.calls[1][strike - 1]);
+      assert.equal(putSpread, state.puts[0][strike - 1] - state.puts[1][strike - 1]);
+      assert.equal(jelly, callSpread - putSpread);
+      assert.equal(jelly, bank.valueOf(`straddle:${strike}:1`, state)
+        - bank.valueOf(`straddle:${strike}:2`, state) - 2 * putSpread);
+    }
+  }
+  // The screenshot's $5.96 back-minus-front quote becomes -$5.96.
+  const family = bank.getBanks().medium.find((entry) => entry.id === 'straddle-time-put-jelly');
+  const values = [2194, 3460, -596, -74];
+  assert.deepEqual(family.coefficients, [1, -1, -2, -1]);
+  assert.equal(values.reduce((total, value, index) => total + value * family.coefficients[index], 0), 0);
 });
 
 test('c/o and p/o quotes preserve algebraic signs and unknowns do not disclose their sign', () => {

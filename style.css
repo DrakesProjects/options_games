@@ -198,6 +198,14 @@ body.game-page {
   width: auto;
 }
 
+.random-position-settings {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1rem;
+  max-width: 18rem;
+}
+
 /* ── Game center (round card & end screen) ──────────────── */
 
 .game-center {

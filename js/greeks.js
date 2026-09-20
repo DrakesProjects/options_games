@@ -154,14 +154,17 @@ GREEK_META.forEach(g => GREEK_BY_KEY[g.key] = g);
 
 // ─── Custom question generator ────────────────────────────────────────────────
 
-const LEG_TYPES = ['call','call','put','put','underlying','underlying'];
+const OPTION_TYPES = ['call', 'put'];
 
 function randInt(min, max) { return Math.floor(Math.random() * (max - min + 1)) + min; }
 function randFloat(min, max) { return min + Math.random() * (max - min); }
 function pick(arr) { return arr[Math.floor(Math.random() * arr.length)]; }
 function pickN(arr, n) { return [...arr].sort(() => Math.random() - 0.5).slice(0, n); }
 
-function generateCustomQuestion(selectedKeys, customOkKeys, n) {
+function generateCustomQuestion(selectedKeys, customOkKeys, n, maxOptions = 4) {
+  const optionLimit = Number.isInteger(maxOptions) && maxOptions >= 1 && maxOptions <= 10 ? maxOptions : 4;
+  // Draw once per question. Retrying a market must not reweight option counts.
+  const numOptions = randInt(1, optionLimit);
   for (let attempt = 0; attempt < 30; attempt++) {
     const S = 100;
     const r = 0.05;
@@ -169,21 +172,25 @@ function generateCustomQuestion(selectedKeys, customOkKeys, n) {
     const dte2 = 60;
     const useTwoExpiries = Math.random() < 0.5;
 
-    const numLegs = randInt(2, 4);
     const legs = [];
 
-    for (let i = 0; i < numLegs; i++) {
-      const type = pick(LEG_TYPES);
+    for (let i = 0; i < numOptions; i++) {
+      const type = pick(OPTION_TYPES);
       const direction = Math.random() < 0.5 ? 1 : -1;
-      if (type === 'underlying') {
-        legs.push({ type: 'underlying', direction, S, displayLabel: (direction > 0 ? 'Long' : 'Short') + ' Underlying' });
-      } else {
-        const K = randInt(S - 15, S + 15);
-        const sigma = Math.round(randFloat(0.15, 0.45) * 100) / 100;
-        const dte = useTwoExpiries ? pick([dte1, dte2]) : dte1;
-        legs.push({ type, direction, S, K, r, sigma, dte,
-          displayLabel: `${direction > 0 ? 'Long' : 'Short'} 1 ${type.charAt(0).toUpperCase() + type.slice(1)}   K=$${K}` });
-      }
+      const K = randInt(S - 15, S + 15);
+      const sigma = Math.round(randFloat(0.15, 0.45) * 100) / 100;
+      const dte = useTwoExpiries ? pick([dte1, dte2]) : dte1;
+      legs.push({ type, direction, S, K, r, sigma, dte,
+        displayLabel: `${direction > 0 ? 'Long' : 'Short'} 1 ${type.charAt(0).toUpperCase() + type.slice(1)}   K=$${K}` });
+    }
+
+    // Preserve optional stock exposure without replacing a sampled option.
+    if (Math.random() < 1 / 3) {
+      const direction = Math.random() < 0.5 ? 1 : -1;
+      legs.splice(randInt(0, legs.length), 0, {
+        type: 'underlying', direction, S,
+        displayLabel: (direction > 0 ? 'Long' : 'Short') + ' Underlying',
+      });
     }
 
     // Determine if option legs use more than one distinct DTE
@@ -257,6 +264,8 @@ const topBarRight    = document.getElementById('top-bar-right');
 const scoreDisplay   = document.getElementById('score-value');
 const durationSelect = document.getElementById('duration-select');
 const modeSelect     = document.getElementById('mode-select');
+const randomPositionSettings = document.getElementById('random-position-settings');
+const maxOptionsSelect = document.getElementById('max-options-select');
 const batchSelect    = document.getElementById('batch-select');
 const startBtn       = document.getElementById('start-btn');
 const positionDisplay  = document.getElementById('position-display');
@@ -278,16 +287,19 @@ durationSelect.addEventListener('change', () => {
 
 const namedOnlyChecks = document.querySelectorAll('.greek-check[data-named-only]');
 
-modeSelect.addEventListener('change', () => {
+function updateModeSettings() {
   selectedMode = modeSelect.value;
   const namedOnly = selectedMode === 'named';
+  randomPositionSettings.classList.toggle('hidden', namedOnly);
   namedOnlyChecks.forEach(cb => {
     cb.disabled = !namedOnly;
     if (!namedOnly) cb.checked = false;
     cb.closest('label').classList.toggle('disabled-label', !namedOnly);
   });
   updateGreekSelection();
-});
+}
+
+modeSelect.addEventListener('change', updateModeSettings);
 
 // Greek checkboxes
 document.querySelectorAll('.greek-check').forEach(cb => {
@@ -338,8 +350,7 @@ selectAllBtn.addEventListener('click', () => {
   updateGreekSelection();
 });
 
-updateSelectAllBtn();
-updateBatchSelect();
+updateModeSettings();
 
 startBtn.addEventListener('click', startSession);
 
@@ -402,7 +413,7 @@ function generateQuestion() {
 
   if (useCustom && okForCustom.length > 0) {
     if (!useNamed || Math.random() < 0.5) {
-      const q = generateCustomQuestion(selectedGreekKeys, okForCustom, n);
+      const q = generateCustomQuestion(selectedGreekKeys, okForCustom, n, Number(maxOptionsSelect.value));
       if (q) return q;
     }
   }
