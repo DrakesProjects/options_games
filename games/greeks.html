@@ -93,6 +93,7 @@
   <!-- Game screen -->
   <div id="game-screen" class="game-center hidden">
     <div class="round-card">
+      <p id="practice-tag" class="practice-tag hidden"></p>
       <div id="position-display"></div>
 
       <div class="greek-question-header">What is the sign of...?</div>
@@ -106,7 +107,7 @@
   <!-- End screen -->
   <div id="end-screen" class="game-center hidden">
     <div class="end-box">
-      <h2>Time's up</h2>
+      <h2 id="end-title">Time's up</h2>
       <div class="final-score">
         <span id="final-score">0</span>
         <span class="label">correct answers</span>
@@ -117,6 +118,8 @@
   </div>
 
   <script src="../js/position-structures.js"></script>
+  <script src="../js/lab-core.js"></script>
+  <script src="lab.js"></script>
   <script src="../js/greeks.js"></script>
   <script src="stats.js"></script>
 </body>

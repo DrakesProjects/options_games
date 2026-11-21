@@ -261,3 +261,93 @@
     align-items: flex-start;
   }
 }
+
+/* ── Lab (shared by every game's setup screen) ──────────── */
+
+.visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+}
+
+.lab-panel {
+  box-sizing: border-box;
+  flex: 0 0 auto;
+  width: min(100%, 42rem);
+  padding: 2rem 2.5rem;
+  background: #fff;
+  border: 1px solid #ddd;
+  text-align: left;
+}
+
+.lab-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin: 0.9rem 0 0.6rem;
+  font-size: 0.85rem;
+}
+
+.lab-table th,
+.lab-table td {
+  padding: 0.45rem 0.4rem;
+  border-bottom: 1px solid #eee;
+  text-align: left;
+  font-weight: normal;
+}
+
+.lab-table thead th {
+  color: #888;
+  font-size: 0.75rem;
+}
+
+.lab-table tbody th { font-weight: bold; }
+.lab-table td:last-child { text-align: right; }
+
+.lab-weak th,
+.lab-weak td { background: #fff4e0; }
+
+.lab-tag {
+  display: inline-block;
+  font-size: 0.68rem;
+  font-weight: normal;
+  color: #8a5a00;
+  border: 1px solid #e0b25c;
+  padding: 0 0.3rem;
+  margin-left: 0.25rem;
+  vertical-align: 1px;
+}
+
+.lab-practice-btn {
+  font-family: inherit;
+  font-size: 0.78rem;
+  padding: 0.25rem 0.6rem;
+  border: 1px solid #1a1a1a;
+  background: transparent;
+  color: inherit;
+  cursor: pointer;
+}
+
+.lab-practice-btn:hover {
+  background: #1a1a1a;
+  color: #fff;
+}
+
+/* Options games; Mental Math styles its own tag. */
+.round-card .practice-tag {
+  font-size: 0.8rem;
+  color: #8a5a00;
+  margin: 0 0 0.75rem;
+}
+
+@media (max-width: 480px) {
+  .lab-panel { padding: 1.25rem 1rem; }
+  .lab-table { font-size: 0.8rem; }
+  .lab-table th,
+  .lab-table td { padding: 0.45rem 0.2rem; }
+  .lab-table th:nth-child(2),
+  .lab-table td:nth-child(2) { display: none; }
+  .lab-tag { display: block; width: fit-content; margin: 0.2rem 0 0; }
+}

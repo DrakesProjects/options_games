@@ -336,3 +336,33 @@ test('reversal and conversion keep their signs as alternate quotations without d
     }
   }
 });
+
+test('every family belongs to one Lab category, and practice draws only that category', () => {
+  const banks = bank.getBanks();
+  const kinds = (family) => new Set(family.keys.map((key) => key.split(':')[0]));
+  for (const mode of ['medium', 'hard']) {
+    for (const family of banks[mode]) {
+      const category = bank.categoryOf(family);
+      const has = (...list) => list.some((kind) => kinds(family).has(kind));
+      const expected = has('butterfly', 'iron') ? 'flies'
+        : has('ct', 'pt', 'jelly') ? 'time'
+          : has('straddle', 'strangle', 'swap') ? 'vol'
+            : has('cv', 'pv', 'box', 'risky') ? 'verticals' : 'parity';
+      assert.equal(category, expected, family.id);
+    }
+  }
+  assert.deepEqual(bank.categoriesFor('medium').map((category) => category.key), ['parity', 'verticals', 'vol', 'time', 'flies']);
+  assert.deepEqual(bank.categoriesFor('hard').map((category) => category.key), ['verticals', 'vol', 'time', 'flies']);
+  let seed = 7;
+  const random = () => ((seed = (Math.imul(seed, 1664525) + 1013904223) >>> 0) / 4294967296);
+  for (const mode of ['medium', 'hard']) {
+    for (const { key } of bank.categoriesFor(mode)) {
+      for (let index = 0; index < 25; index++) {
+        const question = bank.createQuestion(mode, random, key);
+        assert.equal(question.category, key);
+        assert.equal(bank.categoryOf(banks[mode].find((family) => family.id === question.familyId)), key);
+      }
+    }
+  }
+  assert.throws(() => bank.createQuestion('hard', random, 'parity'), /No PCP 2 hard questions/);
+});

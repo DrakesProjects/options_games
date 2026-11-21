@@ -19,6 +19,7 @@ class Element {
     this.scrollTop = 0;
     this.selected = false;
     this.visibleTransitions = 0;
+    this.dataset = {};
     this.classList = {
       contains: (name) => this.className.split(' ').includes(name),
       add: (name) => {
@@ -28,6 +29,7 @@ class Element {
         if (name === 'hidden' && this.classList.contains(name)) this.visibleTransitions += 1;
         this.className = this.className.split(' ').filter((item) => item !== name).join(' ');
       },
+      toggle: (name, force = !this.classList.contains(name)) => (force ? this.classList.add(name) : this.classList.remove(name)),
     };
   }
 
@@ -55,7 +57,11 @@ function setup({ realBank = false, overQuotes = false } = {}) {
   let frame = 0;
   const frames = new Map();
   const requestedModes = [];
+  const requestedCategories = [];
   const questions = [];
+  const recorded = [];
+  const labUses = [];
+  let labOptions;
   const runtime = {
     document: { getElementById: element, createElement: () => new Element() },
     performance: { now: () => now },
@@ -64,6 +70,18 @@ function setup({ realBank = false, overQuotes = false } = {}) {
       return frame;
     },
     cancelAnimationFrame: (id) => frames.delete(id),
+    OptionsLab: {
+      mount(options) {
+        labOptions = options;
+        labUses.push([options.id, [...options.categories].map((category) => category.key)]);
+        let categories = options.categories;
+        return {
+          record: (records) => recorded.push(JSON.parse(JSON.stringify(records))),
+          use: (id, next) => { categories = next; labUses.push([id, [...next].map((category) => category.key)]); },
+          labelOf: (key) => categories.find((category) => category.key === key)?.label || key,
+        };
+      },
+    },
   };
   runtime.window = runtime;
   vm.createContext(runtime);
@@ -74,7 +92,9 @@ function setup({ realBank = false, overQuotes = false } = {}) {
     }
   } else {
     runtime.PCP2Bank = {
+      categoriesFor: () => [{ key: 'parity', label: 'Parity & combos' }],
       createQuestion: () => ({
+        category: 'parity',
         id: `q${questions.length}`,
         family: 'Hidden family',
         contractInfo: ['K1 > K2', 'T1 < T2'],
@@ -89,15 +109,17 @@ function setup({ realBank = false, overQuotes = false } = {}) {
   }
 
   const createQuestion = runtime.PCP2Bank.createQuestion;
-  runtime.PCP2Bank.createQuestion = (mode) => {
+  runtime.PCP2Bank.createQuestion = (mode, random, category) => {
     requestedModes.push(mode);
-    const question = createQuestion(mode);
+    requestedCategories.push(category);
+    const question = createQuestion(mode, random, category);
     questions.push(question);
     return question;
   };
   vm.runInContext(controller, runtime, { filename: 'pcp2.js' });
   return {
-    element, questions, requestedModes, frames,
+    element, questions, requestedModes, requestedCategories, frames, recorded, labUses,
+    lab: () => labOptions,
     setTime: (value) => { now = value; },
     start: () => element('start-btn').fire('click'),
     submit(value) {
@@ -206,7 +228,7 @@ test('page preserves stats hooks, loads the bank before the controller, and omit
   assert.match(html, /value="medium" selected>Medium/);
   assert.doesNotMatch(html, /id="(?:next-btn|solution-panel|target-text|question-family)"/);
   const scripts = [...html.matchAll(/<script src="([^"]+)"/g)].map((match) => match[1]);
-  assert.deepEqual(scripts, ['pcp2-medium.js', 'pcp2-hard.js', 'pcp2-bank.js', 'pcp2.js', 'stats.js']);
+  assert.deepEqual(scripts, ['pcp2-medium.js', 'pcp2-hard.js', 'pcp2-bank.js', '../js/lab-core.js', 'lab.js', 'pcp2.js', 'stats.js']);
   for (const script of scripts) {
     assert.ok(fs.statSync(path.join(gameDirectory, script)).isFile(), `${script} must exist`);
   }
@@ -261,3 +283,66 @@ for (const mode of ['medium', 'hard']) {
     assert.ok(game.element('missed-answer').textContent.includes(lastQuestion.steps[0]));
   });
 }
+
+test('each answered question is recorded with its category, time, and wrong entries', () => {
+  const game = setup({ realBank: true });
+  game.start();
+  for (let round = 0; round < 4; round++) {
+    const question = game.questions.at(-1);
+    for (let miss = 0; miss < round; miss++) game.submit(((question.answer + 1) / 100).toFixed(2));
+    game.submit('');
+    game.setTime((round + 1) * 2000);
+    game.submit((question.answer / 100).toFixed(2));
+  }
+  const cutOff = game.questions.at(-1);
+  game.setTime(60000);
+  [...game.frames.values()].at(-1)();
+  assert.equal(game.recorded.length, 1);
+  const log = game.recorded[0];
+  assert.deepEqual(log.map((record) => record.wrongEntries), [0, 1, 2, 3]);
+  assert.deepEqual(log.map((record) => record.ms), [2000, 2000, 2000, 2000]);
+  assert.deepEqual(log.map((record) => record.category), game.questions.slice(0, 4).map((question) => question.category));
+  assert.ok(cutOff.category);
+  assert.equal(game.element('end-screen').dataset.statsIgnore, 'false');
+  assert.equal(game.element('end-title').textContent, "Time's up");
+});
+
+test('Medium and Hard keep separate Labs, and Hard lists only categories it has', () => {
+  const game = setup({ realBank: true });
+  assert.deepEqual(game.labUses[0], ['pcp2-medium', ['parity', 'verticals', 'vol', 'time', 'flies']]);
+  game.element('mode-select').value = 'hard';
+  game.element('mode-select').fire('change');
+  assert.deepEqual(game.labUses.at(-1), ['pcp2-hard', ['verticals', 'vol', 'time', 'flies']]);
+  game.element('mode-select').value = 'medium';
+  game.element('mode-select').fire('change');
+  assert.deepEqual(game.labUses.at(-1), ['pcp2-medium', ['parity', 'verticals', 'vol', 'time', 'flies']]);
+});
+
+test('practice runs one category at the selected difficulty and is not saved to past results', () => {
+  const game = setup({ realBank: true });
+  game.element('mode-select').value = 'hard';
+  game.element('mode-select').fire('change');
+  game.lab().onPractice('time');
+  assert.equal(game.element('practice-tag').textContent, 'Practice: Time spreads');
+  assert.equal(game.element('practice-tag').classList.contains('hidden'), false);
+  for (let round = 0; round < 6; round++) {
+    game.submit((game.questions.at(-1).answer / 100).toFixed(2));
+  }
+  assert.ok(game.requestedModes.every((mode) => mode === 'hard'));
+  assert.ok(game.requestedCategories.every((category) => category === 'time'));
+  assert.ok(game.questions.every((question) => question.category === 'time'));
+  game.setTime(60000);
+  [...game.frames.values()].at(-1)();
+  assert.equal(game.element('end-screen').dataset.statsIgnore, 'true');
+  assert.equal(game.element('end-title').textContent, 'Practice: Time spreads');
+  assert.ok(game.recorded[0].every((record) => record.category === 'time'));
+
+  game.element('play-again-btn').fire('click');
+  game.setTime(100000);
+  game.start();
+  assert.equal(game.element('practice-tag').classList.contains('hidden'), true);
+  assert.equal(game.requestedCategories.at(-1), undefined);
+  game.setTime(200000);
+  [...game.frames.values()].at(-1)();
+  assert.equal(game.element('end-screen').dataset.statsIgnore, 'false');
+});

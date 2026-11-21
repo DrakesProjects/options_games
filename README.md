@@ -14,6 +14,17 @@ Both PCP games sample uniformly across question variants and shuffle rows. Answe
 
 All games offer 1, 2, 5, 10, 15, 30, or 60-minute sessions. Completed nonzero-score runs are saved locally as answers per minute, with history below settings and a **Clear all** control.
 
+## Lab
+
+Every game's setup screen has a **Lab** that tracks each answered question's time and wrong entries, rolls them into a few broad categories over each category's last 200, and flags a **Problem area** once at least two categories have 10+ records. Each row's **Practice** button runs only that category, even one turned off in settings; practice runs update the Lab but are not saved to past results. The question the timer cuts off is left out. Data is stored locally with a **Clear Lab** control.
+
+- **Put-Call Parity:** by what you solve for: Call, Put, Straddle, B/W & P&S. Problem area = most time per question.
+- **PCP 2:** by the most advanced structure in the question's relationship: Parity & combos, Verticals & boxes, Straddles & strangles, Time spreads, Flies. Medium and Hard keep separate Labs; Hard has no Parity & combos questions. Problem area = most time per question.
+- **Position Risks:** by what moves: Spot (delta, gamma, speed), Time (theta, charm, color, vega decay), Volatility (vega, vanna, volga, zomma), Rates (rho). Each Greek answered is one record, sharing its question's time equally. Because a question's Greeks share one timer, the problem area is the lowest first-try accuracy. Practice includes speed, zomma, and color only in Named mode.
+- **Mental Math:** see above.
+
+Accuracy is correct ÷ (correct + wrong entries); a blank answer is asked for again rather than counted.
+
 ## PCP conventions
 
 - `C − P = S − K + r/c`; parity is `S − K`.
@@ -26,7 +37,7 @@ All games offer 1, 2, 5, 10, 15, 30, or 60-minute sessions. Completed nonzero-sc
 
 ## Tests
 
-Checks cover PCP 2 algebra and gameplay, Position Risks settings and option-count sampling, and Mental Math problem generation, scoring, Lab, and gameplay:
+Checks cover PCP 2 algebra and gameplay, Put-Call Parity gameplay, Position Risks settings and option-count sampling, Mental Math problem generation, scoring, and gameplay, and the Lab in every game:
 
 ```sh
 node --test tests/*.test.cjs

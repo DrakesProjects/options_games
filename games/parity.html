@@ -59,6 +59,7 @@
   <!-- Game screen -->
   <div id="game-screen" class="game-center hidden">
     <div class="round-card">
+      <p id="practice-tag" class="practice-tag hidden"></p>
       <table class="price-table">
         <tbody id="price-table-body"></tbody>
       </table>
@@ -82,7 +83,7 @@
   <!-- End screen -->
   <div id="end-screen" class="game-center hidden">
     <div class="end-box">
-      <h2>Time's up</h2>
+      <h2 id="end-title">Time's up</h2>
       <div class="final-score">
         <span id="final-score">0</span>
         <span class="label">correct answers</span>
@@ -92,6 +93,8 @@
     </div>
   </div>
 
+  <script src="../js/lab-core.js"></script>
+  <script src="lab.js"></script>
   <script src="parity.js"></script>
   <script src="stats.js"></script>
 </body>

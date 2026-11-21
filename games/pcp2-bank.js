@@ -432,8 +432,33 @@
     };
   }
 
+  // Lab categories: a question belongs to the most advanced structure in its
+  // family's relationship, checked from the end of this list backwards.
+  const CATEGORIES = [
+    { key: 'parity', label: 'Parity & combos', kinds: [] },
+    { key: 'verticals', label: 'Verticals & boxes', kinds: ['cv', 'pv', 'box', 'risky'] },
+    { key: 'vol', label: 'Straddles & strangles', kinds: ['straddle', 'strangle', 'swap'] },
+    { key: 'time', label: 'Time spreads', kinds: ['ct', 'pt', 'jelly'] },
+    { key: 'flies', label: 'Flies', kinds: ['butterfly', 'iron'] },
+  ];
+
+  function categoryOf(family) {
+    const kinds = new Set(family.keys.map((key) => key.split(':')[0]));
+    for (let index = CATEGORIES.length - 1; index > 0; index -= 1) {
+      if (CATEGORIES[index].kinds.some((kind) => kinds.has(kind))) return CATEGORIES[index].key;
+    }
+    return CATEGORIES[0].key;
+  }
+
+  // The categories that have questions at this difficulty.
+  function categoriesFor(mode = 'medium') {
+    const present = new Set(getBanks()[mode === 'hard' ? 'hard' : 'medium'].map(categoryOf));
+    return CATEGORIES.filter((category) => present.has(category.key))
+      .map(({ key, label }) => ({ key, label }));
+  }
+
   let questionBanks;
-  function createQuestion(mode = 'medium', random = Math.random) {
+  function createQuestion(mode = 'medium', random = Math.random, category = null) {
     const banks = getBanks();
     if (banks.errors.length) throw new Error(banks.errors.join('\n'));
     if (!questionBanks) {
@@ -441,11 +466,14 @@
         banks[difficulty].flatMap((family) => family.keys.map((_, targetIndex) => ({ family, targetIndex }))),
       ]));
     }
-    const bank = questionBanks[mode === 'hard' ? 'hard' : 'medium'];
+    let bank = questionBanks[mode === 'hard' ? 'hard' : 'medium'];
+    // Practice keeps every variant in the category equally likely.
+    if (category) bank = bank.filter(({ family }) => categoryOf(family) === category);
+    if (!bank.length) throw new Error(`No PCP 2 ${mode} questions in category ${category}.`);
     const { family, targetIndex } = bank[Math.floor(random() * bank.length)];
     const presentationIndex = Math.floor(random() * (1 + (family.presentations?.length || 0)));
-    return questionFor(family, targetIndex, random, presentationIndex);
+    return { ...questionFor(family, targetIndex, random, presentationIndex), category: categoryOf(family) };
   }
 
-  return { createQuestion, getBanks, compileFamily, dependency, expression, generateState, valueOf, questionFor, labelOf, contractIndices, money };
+  return { createQuestion, getBanks, compileFamily, dependency, expression, generateState, valueOf, questionFor, labelOf, contractIndices, money, categoryOf, categoriesFor, CATEGORIES };
 }));

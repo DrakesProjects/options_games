@@ -31,6 +31,17 @@
   const timerWrap = document.getElementById('timer-wrap');
   const timerBar = document.getElementById('timer-bar');
   const timerLabel = document.getElementById('timer-label');
+  const practiceTag = document.getElementById('practice-tag');
+  const endTitle = document.getElementById('end-title');
+
+  // Lab categories: what the question solves for.
+  const LAB_CATEGORIES = [
+    { key: 'call', label: 'Call', targets: ['call'] },
+    { key: 'put', label: 'Put', targets: ['put'] },
+    { key: 'straddle', label: 'Straddle', targets: ['straddle'] },
+    { key: 'bwps', label: 'B/W & P&S', targets: ['bw', 'ps'] },
+  ];
+  const categoryOf = (target) => LAB_CATEGORIES.find((category) => category.targets.includes(target)).key;
 
   let score = 0;
   let currentRound = null;
@@ -38,6 +49,10 @@
   let durationSeconds = 120;
   let endTime = 0;
   let timerFrame = null;
+  let practiceCategory = null;
+  let questionStart = 0;
+  let wrongEntries = 0;
+  let runLog = [];
 
   const roundMoney = (value) => Math.round(value * 100) / 100;
   const formatMoney = (value) => (
@@ -172,6 +187,8 @@
       priceTableBody.append(row);
     }
 
+    questionStart = performance.now();
+    wrongEntries = 0;
     answerInput.value = '';
     answerInput.placeholder = labels[currentRound.target];
     feedback.textContent = '';
@@ -182,8 +199,10 @@
   function submitAnswer() {
     if (!currentRound || endScreen.classList.contains('hidden') === false) return;
 
-    const submitted = Number(answerInput.value);
-    if (!Number.isFinite(submitted)) {
+    // A blank box is not $0.00 (a put can be worth exactly that).
+    const rawAnswer = answerInput.value.trim();
+    const submitted = Number(rawAnswer);
+    if (rawAnswer === '' || !Number.isFinite(submitted)) {
       feedback.textContent = 'Enter a value.';
       feedback.className = 'feedback incorrect';
       answerInput.focus();
@@ -191,12 +210,18 @@
     }
 
     if (Math.abs(roundMoney(submitted) - currentRound.answer) < 0.005) {
+      runLog.push({
+        category: categoryOf(currentRound.target),
+        ms: performance.now() - questionStart,
+        wrongEntries,
+      });
       score += 1;
       scoreValue.textContent = String(score);
       renderRound();
       return;
     }
 
+    wrongEntries += 1;
     feedback.textContent = 'Try again.';
     feedback.className = 'feedback incorrect';
     answerInput.select();
@@ -216,11 +241,20 @@
     timerFrame = requestAnimationFrame(updateTimer);
   }
 
-  function startGame() {
+  function startGame(practice = null) {
     durationSeconds = Number(durationSelect.value);
-    enabledTargets = ['call', 'put'];
-    if (straddleCheck.checked) enabledTargets.push('straddle');
-    if (coveredCheck.checked) enabledTargets.push('bw', 'ps');
+    practiceCategory = practice;
+    if (practiceCategory) {
+      // Practice drills one category even if its relationship is turned off.
+      enabledTargets = LAB_CATEGORIES.find((category) => category.key === practiceCategory).targets.slice();
+    } else {
+      enabledTargets = ['call', 'put'];
+      if (straddleCheck.checked) enabledTargets.push('straddle');
+      if (coveredCheck.checked) enabledTargets.push('bw', 'ps');
+    }
+    practiceTag.textContent = practiceCategory ? `Practice: ${lab.labelOf(practiceCategory)}` : '';
+    practiceTag.classList.toggle('hidden', !practiceCategory);
+    runLog = [];
 
     score = 0;
     scoreValue.textContent = '0';
@@ -245,8 +279,14 @@
     timerWrap.classList.add('hidden');
     timerLabel.classList.add('hidden');
     topBarRight.classList.add('hidden');
-    endScreen.classList.remove('hidden');
+    // The unanswered question the timer cut off is left out of the Lab.
+    lab.record(runLog);
+    runLog = [];
+    endTitle.textContent = practiceCategory ? `Practice: ${lab.labelOf(practiceCategory)}` : "Time's up";
+    // stats.js records each time the end screen appears; practice opts out.
+    endScreen.dataset.statsIgnore = practiceCategory ? 'true' : 'false';
     finalScore.textContent = String(score);
+    endScreen.classList.remove('hidden');
 
     if (currentRound) {
       missedAnswer.textContent = `${labels[currentRound.target]}: ${formatMoney(currentRound.answer)} · ${currentRound.formula}`;
@@ -261,7 +301,13 @@
     currentRound = null;
   }
 
-  startButton.addEventListener('click', startGame);
+  const lab = globalThis.OptionsLab.mount({
+    id: 'parity',
+    categories: LAB_CATEGORIES.map(({ key, label }) => ({ key, label })),
+    onPractice: (key) => startGame(key),
+  });
+
+  startButton.addEventListener('click', () => startGame());
   submitButton.addEventListener('click', submitAnswer);
   playAgainButton.addEventListener('click', showSetup);
   answerInput.addEventListener('keydown', (event) => {

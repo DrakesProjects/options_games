@@ -145,6 +145,17 @@ const GREEK_META = [
 const GREEK_BY_KEY = {};
 GREEK_META.forEach(g => GREEK_BY_KEY[g.key] = g);
 
+// Lab categories, by what moves: a cross Greek goes with the variable it is
+// measured against (vanna = delta per vol point goes under Volatility).
+const LAB_CATEGORIES = [
+  { key: 'spot',  label: 'Spot',       greeks: ['delta', 'gamma', 'speed'] },
+  { key: 'time',  label: 'Time',       greeks: ['theta', 'charm', 'color', 'vegaDecay'] },
+  { key: 'vol',   label: 'Volatility', greeks: ['vega', 'vanna', 'volga', 'zomma'] },
+  { key: 'rates', label: 'Rates',      greeks: ['rho'] },
+];
+const LAB_CATEGORY_OF = {};
+LAB_CATEGORIES.forEach(c => c.greeks.forEach(k => { LAB_CATEGORY_OF[k] = c.key; }));
+
 // ─── Custom question generator ────────────────────────────────────────────────
 
 const OPTION_TYPES = ['call', 'put'];
@@ -256,6 +267,11 @@ let timerInterval = null;
 let currentQuestion = null;
 let selectedGreekKeys = ['delta','gamma','theta','vega'];
 let selectedMode = 'named';
+let practiceCategory = null;
+let activeGreekKeys = selectedGreekKeys;
+let activeN = 1;
+let questionStart = 0;
+let runLog = [];
 
 // ─── DOM refs ─────────────────────────────────────────────────────────────────
 
@@ -282,6 +298,8 @@ const finalScoreEl   = document.getElementById('final-score');
 const lastAnswerEl   = document.getElementById('last-answer');
 const playAgainBtn   = document.getElementById('play-again-btn');
 const selectAllBtn   = document.getElementById('select-all-btn');
+const practiceTag    = document.getElementById('practice-tag');
+const endTitle       = document.getElementById('end-title');
 
 // ─── Setup ────────────────────────────────────────────────────────────────────
 
@@ -359,11 +377,41 @@ selectAllBtn.addEventListener('click', () => {
 
 updateModeSettings();
 
-startBtn.addEventListener('click', startSession);
+startBtn.addEventListener('click', () => startSession());
+
+// Several Greeks share one timer per question, so the problem area is the
+// category with the lowest first-try accuracy rather than the slowest.
+const lab = globalThis.OptionsLab.mount({
+  id: 'greeks',
+  categories: LAB_CATEGORIES.map(({ key, label }) => ({ key, label })),
+  metric: 'firstTry',
+  countLabel: 'Answers',
+  onPractice: (key) => startSession(key),
+});
+
+// Practice uses the category's Greeks regardless of the checkboxes, except
+// that speed, zomma, and color exist only for named positions.
+function practiceKeys(category) {
+  const keys = LAB_CATEGORIES.find(c => c.key === category).greeks;
+  return selectedMode === 'named' ? keys.slice() : keys.filter(k => GREEK_BY_KEY[k].customOk);
+}
 
 // ─── Session ──────────────────────────────────────────────────────────────────
 
-function startSession() {
+function startSession(practice = null) {
+  practiceCategory = practice;
+  if (practiceCategory) {
+    activeGreekKeys = practiceKeys(practiceCategory);
+    activeN = batchSelect.value === 'all'
+      ? activeGreekKeys.length
+      : Math.min(parseInt(batchSelect.value, 10), activeGreekKeys.length);
+  } else {
+    activeGreekKeys = selectedGreekKeys;
+    activeN = resolveN();
+  }
+  practiceTag.textContent = practiceCategory ? `Practice: ${lab.labelOf(practiceCategory)}` : '';
+  practiceTag.classList.toggle('hidden', !practiceCategory);
+  runLog = [];
   sessionDuration = selectedDuration;
   timeRemaining = sessionDuration;
   score = 0;
@@ -404,7 +452,7 @@ function updateScoreDisplay() {
 // ─── Question flow ────────────────────────────────────────────────────────────
 
 function customOkKeys() {
-  return selectedGreekKeys.filter(k => GREEK_BY_KEY[k].customOk);
+  return activeGreekKeys.filter(k => GREEK_BY_KEY[k].customOk);
 }
 
 function resolveN() {
@@ -413,24 +461,26 @@ function resolveN() {
 }
 
 function generateQuestion() {
-  const n = resolveN();
+  const n = activeN;
   const useNamed  = selectedMode === 'named'  || selectedMode === 'both';
   const useCustom = selectedMode === 'custom' || selectedMode === 'both';
   const okForCustom = customOkKeys();
 
   if (useCustom && okForCustom.length > 0) {
     if (!useNamed || Math.random() < 0.5) {
-      const q = generateCustomQuestion(selectedGreekKeys, okForCustom, n, Number(maxOptionsSelect.value));
+      const q = generateCustomQuestion(activeGreekKeys, okForCustom, n, Number(maxOptionsSelect.value));
       if (q) return q;
     }
   }
-  if (useNamed) return generateNamedQuestion(selectedGreekKeys, n);
+  if (useNamed) return generateNamedQuestion(activeGreekKeys, n);
   // last resort
-  return generateNamedQuestion(selectedGreekKeys, n);
+  return generateNamedQuestion(activeGreekKeys, n);
 }
 
 function loadNextQuestion() {
   currentQuestion = generateQuestion();
+  currentQuestion.items.forEach(item => { item.wrongEntries = 0; });
+  questionStart = Date.now();
   renderQuestion(currentQuestion);
   feedbackEl.textContent = '';
   feedbackEl.className = 'feedback';
@@ -495,6 +545,11 @@ function checkAnswer() {
   });
 
   if (allCorrect) {
+    // One record per Greek; the question's time is split evenly across them.
+    const ms = (Date.now() - questionStart) / currentQuestion.items.length;
+    currentQuestion.items.forEach(item => runLog.push({
+      category: LAB_CATEGORY_OF[item.key], ms, wrongEntries: item.wrongEntries,
+    }));
     score += currentQuestion.items.length;
     updateScoreDisplay();
     loadNextQuestion();
@@ -508,6 +563,7 @@ function checkAnswer() {
         row.classList.add('item-correct');
         row.querySelectorAll('.sign-btn').forEach(b => { b.disabled = true; });
       } else {
+        item.wrongEntries += 1;
         // Clear wrong selection so the player can retry
         row.classList.remove('item-wrong');
         row.querySelectorAll('.sign-btn').forEach(b => b.classList.remove('selected'));
@@ -523,6 +579,12 @@ function checkAnswer() {
 
 function endSession() {
   clearInterval(timerInterval);
+  // The unanswered question the timer cut off is left out of the Lab.
+  lab.record(runLog);
+  runLog = [];
+  endTitle.textContent = practiceCategory ? `Practice: ${lab.labelOf(practiceCategory)}` : "Time's up";
+  // stats.js records each time the end screen appears; practice opts out.
+  endScreen.dataset.statsIgnore = practiceCategory ? 'true' : 'false';
   gameScreen.classList.add('hidden');
   timerWrap.classList.add('hidden');
   timerLabel.classList.add('hidden');

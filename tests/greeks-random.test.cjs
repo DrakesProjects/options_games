@@ -59,6 +59,7 @@ function setup() {
   math.random = seededRandom();
   const runtime = vm.createContext({
     Math: math,
+    OptionsLab: { mount: () => ({ record() {}, use() {}, labelOf: (key) => key }) },
     document: {
       getElementById: element,
       createElement: () => new Element(),
@@ -219,7 +220,7 @@ test('named questions render only the position name and optional component money
 
 test('Position Risks loads its structure catalog before the game controller', () => {
   const scripts = [...html.matchAll(/<script src="([^"]+)"/g)].map((match) => match[1]);
-  assert.deepEqual(scripts, ['../js/position-structures.js', '../js/greeks.js', 'stats.js']);
+  assert.deepEqual(scripts, ['../js/position-structures.js', '../js/lab-core.js', 'lab.js', '../js/greeks.js', 'stats.js']);
   for (const script of scripts) assert.ok(fs.existsSync(path.resolve(root, 'games', script)));
 });
 

@@ -19,6 +19,8 @@
   const timerWrap = document.getElementById('timer-wrap');
   const timerBar = document.getElementById('timer-bar');
   const timerLabel = document.getElementById('timer-label');
+  const practiceTag = document.getElementById('practice-tag');
+  const endTitle = document.getElementById('end-title');
 
   let score = 0;
   let currentQuestion = null;
@@ -27,6 +29,10 @@
   let durationSeconds = 120;
   let endTime = 0;
   let timerFrame = null;
+  let practiceCategory = null;
+  let questionStart = 0;
+  let wrongEntries = 0;
+  let runLog = [];
 
   const money = (cents) => `${cents < 0 ? '-' : ''}$${(Math.abs(cents) / 100).toFixed(2)}`;
 
@@ -39,7 +45,11 @@
   }
 
   function renderQuestion() {
-    currentQuestion = window.PCP2Bank.createQuestion(currentMode);
+    currentQuestion = practiceCategory
+      ? window.PCP2Bank.createQuestion(currentMode, Math.random, practiceCategory)
+      : window.PCP2Bank.createQuestion(currentMode);
+    questionStart = performance.now();
+    wrongEntries = 0;
     contractInfo.replaceChildren(...currentQuestion.contractInfo.map((fact) => {
       const element = document.createElement('span');
       element.textContent = fact;
@@ -90,12 +100,14 @@
     }
 
     if (Math.round(submitted * 100) === currentQuestion.answer) {
+      runLog.push({ category: currentQuestion.category, ms: performance.now() - questionStart, wrongEntries });
       score += 1;
       scoreValue.textContent = String(score);
       renderQuestion();
       return;
     }
 
+    wrongEntries += 1;
     feedback.textContent = 'Try again.';
     feedback.className = 'feedback wrong';
     answerInput.setAttribute('aria-invalid', 'true');
@@ -115,12 +127,19 @@
     timerFrame = requestAnimationFrame(updateTimer);
   }
 
-  function startGame() {
+  const labIdFor = (mode) => `pcp2-${mode}`;
+  const selectedMode = () => (modeSelect.value === 'hard' ? 'hard' : 'medium');
+
+  function startGame(practice = null) {
     if (gameActive) return;
+    practiceCategory = practice;
+    runLog = [];
     const requestedDuration = Number(durationSelect.value);
     durationSeconds = Number.isFinite(requestedDuration) && requestedDuration > 0
       ? requestedDuration : 120;
-    currentMode = modeSelect.value === 'hard' ? 'hard' : 'medium';
+    currentMode = selectedMode();
+    practiceTag.textContent = practiceCategory ? `Practice: ${lab.labelOf(practiceCategory)}` : '';
+    practiceTag.classList.toggle('hidden', !practiceCategory);
     score = 0;
     scoreValue.textContent = '0';
     modeDisplay.textContent = currentMode === 'hard' ? 'Hard' : 'Medium';
@@ -148,6 +167,12 @@
     timerWrap.classList.add('hidden');
     timerLabel.classList.add('hidden');
     topBarRight.classList.add('hidden');
+    // The unanswered question the timer cut off is left out of the Lab.
+    lab.record(runLog);
+    runLog = [];
+    endTitle.textContent = practiceCategory ? `Practice: ${lab.labelOf(practiceCategory)}` : "Time's up";
+    // stats.js records each time the end screen appears; practice opts out.
+    endScreen.dataset.statsIgnore = practiceCategory ? 'true' : 'false';
     finalScore.textContent = String(score);
     if (currentQuestion) {
       missedAnswer.textContent = [
@@ -166,12 +191,20 @@
     currentQuestion = null;
   }
 
+  // Medium and Hard keep separate Labs: Hard questions take much longer.
+  const lab = globalThis.OptionsLab.mount({
+    id: labIdFor(selectedMode()),
+    categories: window.PCP2Bank.categoriesFor(selectedMode()),
+    onPractice: (key) => startGame(key),
+  });
+
   modeSelect.addEventListener('change', () => {
+    lab.use(labIdFor(selectedMode()), window.PCP2Bank.categoriesFor(selectedMode()));
     modeNote.textContent = modeSelect.value === 'hard'
       ? 'Combine relationships across structures, strikes, and expirations.'
       : 'Structure relationships and their rearrangements.';
   });
-  document.getElementById('start-btn').addEventListener('click', startGame);
+  document.getElementById('start-btn').addEventListener('click', () => startGame());
   document.getElementById('submit-btn').addEventListener('click', submitAnswer);
   document.getElementById('play-again-btn').addEventListener('click', showSetup);
   answerInput.addEventListener('keydown', (event) => {
