@@ -51,7 +51,7 @@ test('long and short positions have opposite computed Greek signs and identical 
     const net = runtime.computeNetGreeks(long.legs);
     for (const key of Object.keys(net)) {
       assert.ok(Number.isFinite(net[key]), `${entry.label}: ${key}`);
-      assert.equal(long.greeks[key], runtime.sign(net[key]));
+      assert.equal(long.greeks[key], entry.conventionalZeros.includes(key) ? '~0' : runtime.sign(net[key], key));
       assert.equal(short.greeks[key], long.greeks[key] === '+' ? '-' : long.greeks[key] === '-' ? '+' : '~0');
     }
   }
@@ -112,6 +112,52 @@ test('vega decay matches calendar-time vega decay away from the money', () => {
           assert.ok(Math.abs(actual - expected) < 1e-4, `${type} K=${K} T=${T} sigma=${sigma}: ${actual} vs ${expected}`);
         }
       }
+    }
+  }
+});
+
+test('the ~0 cutoff catches only near-exact cancellations, with no named answer within 20% of it', () => {
+  const scale = vm.runInContext('GREEK_SCALE', runtime);
+  const fraction = vm.runInContext('ZERO_FRACTION', runtime);
+  const find = (kind) => positions.find((position) => position.structureKey.split(':')[0] === kind && position.direction === 1);
+  const raw = (kind, key) => runtime.sign(runtime.computeNetGreeks(find(kind).legs)[key], key);
+  // Residues small enough to be arithmetic noise.
+  assert.equal(raw('jelly', 'theta'), '~0');
+  assert.equal(raw('butterfly', 'delta'), '~0');
+  assert.equal(raw('straddle', 'volga'), '~0');
+  // Small but real exposures with no convention keep their signs.
+  assert.equal(find('cv').greeks.theta, '-');
+  assert.equal(find('swap').greeks.theta, '+');
+  assert.equal(find('jelly').greeks.rho, '-');
+  assert.equal(find('box').greeks.rho, '-');
+  assert.equal(find('call').greeks.charm, '-');
+  for (const position of positions) {
+    const net = runtime.computeNetGreeks(position.legs);
+    for (const [key, value] of Object.entries(net)) {
+      const ratio = Math.abs(value) / (fraction * scale[key]);
+      assert.ok(ratio < 0.8 || ratio > 1.2, `${position.name} ${key} is within 20% of the ~0 cutoff (${ratio.toFixed(3)})`);
+    }
+  }
+});
+
+test('conventional zeros apply to both sides and never hide a sizable exposure', () => {
+  const scale = vm.runInContext('GREEK_SCALE', runtime);
+  const find = (kind, direction) => positions.find((position) => position.structureKey.split(':')[0] === kind && position.direction === direction);
+  const expected = {
+    call: ['vanna'], put: ['vanna'], bw: ['vanna'], ps: ['vanna'],
+    straddle: ['delta', 'rho', 'vanna'], strangle: ['delta', 'rho', 'vanna'],
+    box: ['theta'], ct: ['delta', 'vanna', 'charm'], pt: ['delta', 'vanna', 'charm'],
+    butterfly: ['delta', 'rho', 'vanna', 'charm'], iron: ['delta', 'rho', 'vanna', 'charm'],
+  };
+  for (const entry of catalog.structures) {
+    const kind = entry.key.split(':')[0];
+    assert.deepEqual(entry.conventionalZeros, expected[kind] || [], entry.label);
+    const net = runtime.computeNetGreeks(catalog.createPosition(entry, 1).legs);
+    for (const key of entry.conventionalZeros) {
+      assert.ok(key in scale, `${entry.label}: unknown Greek ${key}`);
+      const share = Math.abs(net[key]) / scale[key];
+      assert.ok(share < 0.15, `${entry.label} ${key} is ${(share * 100).toFixed(1)}% of a typical option, too large to call zero`);
+      for (const direction of [1, -1]) assert.equal(find(kind, direction).greeks[key], '~0', `${entry.label} ${key}`);
     }
   }
 });

@@ -59,9 +59,11 @@ function bsGreeks(type, S, K, r, sigma, T) {
   return { delta, gamma, theta, vega, rho, vanna, charm, speed, volga, vegaDecay, zomma, color };
 }
 
+const GREEK_KEYS = ['delta','gamma','theta','vega','rho','vanna','charm','speed','volga','vegaDecay','zomma','color'];
+
 // Sum Greeks across legs; underlying contributes only delta, fixed cash none.
 function computeNetGreeks(legs) {
-  const keys = ['delta','gamma','theta','vega','rho','vanna','charm','speed','volga','vegaDecay','zomma','color'];
+  const keys = GREEK_KEYS;
   const net = {};
   keys.forEach(k => net[k] = 0);
 
@@ -78,7 +80,34 @@ function computeNetGreeks(legs) {
   return net;
 }
 
-function sign(val, threshold = 0.0001) {
+// Greeks come in different units (theta per day, vega per vol point, charm per
+// year), so "~0" is judged against each Greek's own scale: the median absolute
+// value over single calls and puts at 90–110 strikes and both expiries, at the
+// named-position assumptions. Below ZERO_FRACTION of that scale counts as ~0.
+// The cutoff only catches near-exact cancellations; 1.25% sits in the gap
+// between named-position values of 0.96% and 1.64%. Zeros that hold by trading
+// convention rather than arithmetic are listed per structure in
+// position-structures.js.
+const ZERO_FRACTION = 0.0125;
+const GREEK_SCALE = (() => {
+  const { S, r, sigma, expiries } = PositionStructures.market;
+  const samples = Object.fromEntries(GREEK_KEYS.map(k => [k, []]));
+  for (const type of ['call', 'put']) {
+    for (const K of [90, 95, 100, 105, 110]) {
+      for (const dte of expiries) {
+        const g = bsGreeks(type, S, K, r, sigma, dte / 365);
+        GREEK_KEYS.forEach(k => samples[k].push(Math.abs(g[k])));
+      }
+    }
+  }
+  return Object.fromEntries(GREEK_KEYS.map(k => {
+    const sorted = samples[k].sort((a, b) => a - b);
+    return [k, sorted[Math.floor(sorted.length / 2)]];
+  }));
+})();
+
+function sign(val, key) {
+  const threshold = ZERO_FRACTION * GREEK_SCALE[key];
   if (val > threshold)  return '+';
   if (val < -threshold) return '-';
   return '~0';
@@ -91,7 +120,8 @@ const NAMED_POSITIONS = PositionStructures.structures.flatMap((entry) => [1, -1]
   const net = computeNetGreeks(position.legs);
   return {
     ...position,
-    greeks: Object.fromEntries(Object.entries(net).map(([key, value]) => [key, sign(value)])),
+    greeks: Object.fromEntries(Object.entries(net).map(([key, value]) =>
+      [key, position.conventionalZeros.includes(key) ? '~0' : sign(value, key)])),
   };
 }));
 
@@ -122,7 +152,15 @@ const OPTION_TYPES = ['call', 'put'];
 function randInt(min, max) { return Math.floor(Math.random() * (max - min + 1)) + min; }
 function randFloat(min, max) { return min + Math.random() * (max - min); }
 function pick(arr) { return arr[Math.floor(Math.random() * arr.length)]; }
-function pickN(arr, n) { return [...arr].sort(() => Math.random() - 0.5).slice(0, n); }
+// Fisher–Yates: every subset and order is equally likely.
+function pickN(arr, n) {
+  const copy = [...arr];
+  for (let i = copy.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [copy[i], copy[j]] = [copy[j], copy[i]];
+  }
+  return copy.slice(0, n);
+}
 
 function generateCustomQuestion(selectedKeys, customOkKeys, n, maxOptions = 4) {
   const optionLimit = Number.isInteger(maxOptions) && maxOptions >= 1 && maxOptions <= 10 ? maxOptions : 4;
@@ -167,7 +205,7 @@ function generateCustomQuestion(selectedKeys, customOkKeys, n, maxOptions = 4) {
 
     const net = computeNetGreeks(legs);
 
-    const candidates = customOkKeys.filter(k => sign(net[k]) !== '~0');
+    const candidates = customOkKeys.filter(k => sign(net[k], k) !== '~0');
     if (candidates.length === 0) continue;
 
     const pickedKeys = pickN(candidates, Math.min(n, candidates.length));
@@ -175,7 +213,7 @@ function generateCustomQuestion(selectedKeys, customOkKeys, n, maxOptions = 4) {
       mode: 'custom',
       legs,
       S, r,
-      items: pickedKeys.map(k => ({ key: k, label: GREEK_BY_KEY[k].label, correctSign: sign(net[k]) })),
+      items: pickedKeys.map(k => ({ key: k, label: GREEK_BY_KEY[k].label, correctSign: sign(net[k], k) })),
     };
   }
   return null; // signal to fall back to named

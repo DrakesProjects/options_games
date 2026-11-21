@@ -184,7 +184,7 @@ test('stock is extra and random option positions retain mixed expirations and co
       for (const leg of options) assert.ok(leg.displayLabel.endsWith(`${leg.dte} DTE`));
     }
     const net = runtime.computeNetGreeks(question.legs);
-    for (const item of question.items) assert.equal(item.correctSign, runtime.sign(net[item.key]));
+    for (const item of question.items) assert.equal(item.correctSign, runtime.sign(net[item.key], item.key));
   }
   assert.ok(sawStock);
   assert.ok(sawMixedExpiries);
@@ -221,4 +221,17 @@ test('Position Risks loads its structure catalog before the game controller', ()
   const scripts = [...html.matchAll(/<script src="([^"]+)"/g)].map((match) => match[1]);
   assert.deepEqual(scripts, ['../js/position-structures.js', '../js/greeks.js', 'stats.js']);
   for (const script of scripts) assert.ok(fs.existsSync(path.resolve(root, 'games', script)));
+});
+
+test('Greek selection picks every Greek first equally often', () => {
+  const { runtime } = setup();
+  const items = ['a', 'b', 'c', 'd', 'e'];
+  const counts = Object.fromEntries(items.map((item) => [item, 0]));
+  const draws = 50000;
+  for (let i = 0; i < draws; i++) {
+    const picked = runtime.pickN(items, 3);
+    assert.equal(new Set(picked).size, 3);
+    counts[picked[0]]++;
+  }
+  for (const item of items) assert.ok(Math.abs(counts[item] / draws - 0.2) < 0.01, `${item}: ${counts[item]}`);
 });
