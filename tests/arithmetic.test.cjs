@@ -183,7 +183,7 @@ test('the Lab reports four broad operations and flags the most time per correct 
 
 test('page loads the core before the controller, and every referenced id exists', () => {
   const scripts = [...html.matchAll(/<script src="([^"]+)"/g)].map((match) => match[1]);
-  assert.deepEqual(scripts, ['../js/arithmetic-core.js', 'arithmetic.js', 'stats.js', 'tabs.js']);
+  assert.deepEqual(scripts, ['../theme.js', '../js/arithmetic-core.js', 'arithmetic.js', 'stats.js', 'tabs.js']);
   for (const script of scripts) assert.ok(fs.existsSync(path.resolve(root, 'games', script)));
   const ids = new Set([...html.matchAll(/\sid="([^"]+)"/g)].map((match) => match[1]));
   for (const [, id] of controllerSource.matchAll(/\$\('([^']+)'\)/g)) assert.ok(ids.has(id), `missing #${id}`);
@@ -256,9 +256,8 @@ function setupPage({ coarse = false, storage = {}, confirm = true } = {}) {
     const block = html.split(`id="${id}"`)[1].split('</select>')[0];
     return [...block.matchAll(/<option value="([^"]+)"[^>]*>([^<]+)</g)].map((match) => ({ value: match[1], textContent: match[2] }));
   };
-  for (const id of ['duration-select', 'theme-select']) elements[id].options = optionsFor(id);
+  elements['duration-select'].options = optionsFor('duration-select');
   elements['duration-select'].value = '120';
-  elements['theme-select'].value = 'light';
   const opChecks = ['add', 'sub', 'mul', 'div'].map((value) => Object.assign(new FakeElement('input'), { value, checked: true }));
   const numpadKeys = [...html.matchAll(/data-key="([^"]+)"/g)].map((match) => {
     const key = new FakeElement('button');
@@ -491,17 +490,14 @@ test('settings are clamped, saved, and reset; no operations means no start', () 
   assert.ok(page.visible('game-screen'), 'practice still works for a disabled operation');
   page.key('Escape', page.el('answer-input'));
 
-  page.el('theme-select').value = 'dark';
-  page.el('theme-select').dispatch('change');
-  assert.ok(page.body.classList.contains('theme-dark'));
-
+  // The theme moved to the home page; Mental Math no longer has its own.
+  assert.equal(page.el('theme-select'), undefined);
   const saved = JSON.parse(page.store['options-games.arithmetic.v1.settings']);
-  assert.equal(saved.theme, 'dark');
+  assert.equal(saved.theme, undefined);
   assert.deepEqual(saved.settings.multiplication.left, { min: 12, max: 20 });
 
   const reloaded = setupPage({ storage: page.store });
   assert.equal(reloaded.el('mul-left-max').value, '20');
-  assert.ok(reloaded.body.classList.contains('theme-dark'));
 
   page.el('reset-btn').dispatch('click');
   assert.equal(page.el('mul-left-min').value, '2');

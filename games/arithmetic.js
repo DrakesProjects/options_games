@@ -18,7 +18,6 @@
   const timerBar = $('timer-bar');
   const timerLabel = $('timer-label');
   const durationSelect = $('duration-select');
-  const themeSelect = $('theme-select');
   const resetButton = $('reset-btn');
   const setupError = $('setup-error');
   const startButton = $('start-btn');
@@ -100,16 +99,9 @@
     }
   }
 
-  function applyTheme(theme) {
-    const dark = theme === 'dark';
-    themeSelect.value = dark ? 'dark' : 'light';
-    document.body.classList.toggle('theme-dark', dark);
-  }
-
   function persistSettings() {
     stored = {
       settings: readSettings(),
-      theme: themeSelect.value,
       duration: durationSelect.value,
       bests,
     };
@@ -493,7 +485,6 @@
     }
   }
   durationSelect.addEventListener('change', () => { persistSettings(); renderBestNote(); });
-  themeSelect.addEventListener('change', () => { applyTheme(themeSelect.value); persistSettings(); });
   resetButton.addEventListener('click', () => {
     writeSettings(Core.normalizeSettings(Core.STANDARD_SETTINGS));
     validateSetup();
@@ -512,6 +503,5 @@
   if ([...durationSelect.options].some((option) => option.value === stored.duration)) {
     durationSelect.value = stored.duration;
   }
-  applyTheme(stored.theme);
   showSetup();
 })();

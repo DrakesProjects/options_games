@@ -228,7 +228,7 @@ test('page preserves stats hooks, loads the bank before the controller, and omit
   assert.match(html, /value="medium" selected>Medium/);
   assert.doesNotMatch(html, /id="(?:next-btn|solution-panel|target-text|question-family)"/);
   const scripts = [...html.matchAll(/<script src="([^"]+)"/g)].map((match) => match[1]);
-  assert.deepEqual(scripts, ['pcp2-medium.js', 'pcp2-hard.js', 'pcp2-bank.js', '../js/lab-core.js', 'lab.js', 'pcp2.js', 'stats.js', 'tabs.js']);
+  assert.deepEqual(scripts, ['../theme.js', 'pcp2-medium.js', 'pcp2-hard.js', 'pcp2-bank.js', '../js/lab-core.js', 'lab.js', 'pcp2.js', 'stats.js', 'tabs.js']);
   for (const script of scripts) {
     assert.ok(fs.statSync(path.join(gameDirectory, script)).isFile(), `${script} must exist`);
   }

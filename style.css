@@ -86,6 +86,19 @@ body.hub-page {
 .hub-weak { color: #8a5a00; }
 .hub-card .btn { margin-top: 0.5rem; }
 
+.hub-theme {
+  position: absolute;
+  top: 1rem;
+  right: 1.25rem;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.8rem;
+  color: #888;
+}
+
+.hub-theme .duration-select { width: auto; }
+
 @media (max-width: 560px) {
   body.hub-page { padding: 1.25rem 1rem; }
   .hub-grid { grid-template-columns: minmax(0, 1fr); }
@@ -471,3 +484,63 @@ body.game-page {
 }
 
 .hidden { display: none !important; }
+
+/* ── Dark theme (body.theme-dark, set by theme.js) ─────── */
+
+body.theme-dark {
+  background: #1e1f22;
+  color: #e6e6e3;
+}
+
+body.theme-dark .top-bar,
+body.theme-dark .setup-box,
+body.theme-dark .round-card,
+body.theme-dark .hub-card,
+body.theme-dark .duration-select,
+body.theme-dark .answer-input,
+body.theme-dark .sign-btn {
+  background: #2a2b2f;
+  border-color: #3d3e43;
+  color: #e6e6e3;
+}
+
+body.theme-dark .btn { background: #e6e6e3; color: #1a1a1a; }
+body.theme-dark .btn:hover { background: #fff; }
+body.theme-dark .duration-select:focus,
+body.theme-dark .answer-input:focus,
+body.theme-dark .sign-btn:hover { border-color: #e6e6e3; }
+body.theme-dark .sign-btn.selected { background: #e6e6e3; color: #1a1a1a; border-color: #e6e6e3; }
+
+body.theme-dark .timer-bar-wrap { background: #3a3b40; }
+body.theme-dark .timer-bar { background: #e6e6e3; }
+body.theme-dark .timer-bar.warning { background: #e06c5b; }
+body.theme-dark .timer-label { color: #e6e6e3; }
+
+body.theme-dark .subtitle,
+body.theme-dark .hub-desc,
+body.theme-dark .setup-identity,
+body.theme-dark .final-score .label,
+body.theme-dark .missed-answer,
+body.theme-dark .price-table td:first-child,
+body.theme-dark .position-moneyness,
+body.theme-dark .position-params,
+body.theme-dark .position-legs-list,
+body.theme-dark .greek-question-header,
+body.theme-dark .greek-item-label { color: #c9c9c5; }
+
+body.theme-dark .hub-theme,
+body.theme-dark .setup-label,
+body.theme-dark .setup-note,
+body.theme-dark .back-link,
+body.theme-dark .select-all-btn,
+body.theme-dark .hub-stat.hub-empty { color: #8f8f8b; }
+
+body.theme-dark .back-link:hover,
+body.theme-dark .select-all-btn:hover { color: #fff; }
+body.theme-dark .price-table td.unknown { color: #e6e6e3; }
+body.theme-dark .price-table tr,
+body.theme-dark .greek-item-row { border-bottom-color: #3d3e43; }
+body.theme-dark .hub-weak { color: #f0b85a; }
+body.theme-dark .feedback.correct,
+body.theme-dark .greek-item-row.item-correct .greek-item-label { color: #5cc98a; }
+body.theme-dark .feedback.wrong { color: #e06c5b; }

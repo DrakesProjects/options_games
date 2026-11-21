@@ -76,8 +76,6 @@
   justify-content: center;
 }
 
-.theme-select { width: auto; }
-
 .setup-error {
   min-height: 1.1em;
   font-size: 0.8rem;
@@ -283,53 +281,23 @@
 }
 
 /* ── Dark theme ─────────────────────────────────────────── */
+/* Shared dark styles live in style.css and stats.css; these are Mental Math's own. */
 
-body.theme-dark {
-  background: #1e1f22;
-  color: #e6e6e3;
-}
-
-body.theme-dark .top-bar,
-body.theme-dark .setup-box,
-body.theme-dark .lab-panel,
-body.theme-dark .stats-panel,
 body.theme-dark .end-stat,
 body.theme-dark .run-chart-figure,
 body.theme-dark .numpad-key,
-body.theme-dark .duration-select,
 body.theme-dark .range-input {
   background: #2a2b2f;
   border-color: #3d3e43;
   color: #e6e6e3;
 }
 
-body.theme-dark .btn { background: #e6e6e3; color: #1a1a1a; }
-body.theme-dark .btn:hover { background: #fff; }
 body.theme-dark .btn-secondary { background: transparent; color: #e6e6e3; border-color: #e6e6e3; }
 body.theme-dark .btn-secondary:hover { background: #3a3b40; }
-body.theme-dark .timer-bar-wrap { background: #3a3b40; }
-body.theme-dark .timer-bar { background: #e6e6e3; }
-body.theme-dark .timer-bar.warning { background: #e06c5b; }
-body.theme-dark .timer-label { color: #e6e6e3; }
 body.theme-dark .arith-input { border-bottom-color: #e6e6e3; }
-body.theme-dark .lab-table th,
-body.theme-dark .lab-table td { border-bottom-color: #3d3e43; }
-body.theme-dark .lab-weak th,
-body.theme-dark .lab-weak td { background: #3a3122; }
-body.theme-dark .lab-tag,
-body.theme-dark .practice-tag { color: #f0b85a; border-color: #8a6a2e; }
-body.theme-dark .lab-practice-btn { border-color: #e6e6e3; }
-body.theme-dark .setup-tabs { border-bottom-color: #3d3e43; }
-body.theme-dark .setup-tab { color: #9a9a96; }
-body.theme-dark .setup-tab:hover { color: #e6e6e3; }
-body.theme-dark .setup-tab[aria-selected="true"] { color: #e6e6e3; border-bottom-color: #e6e6e3; }
-body.theme-dark .lab-practice-btn:hover { background: #e6e6e3; color: #1a1a1a; }
 body.theme-dark .best-note,
 body.theme-dark .range-name,
 body.theme-dark .run-detail { color: #c9c9c5; }
-body.theme-dark .back-link:hover,
-body.theme-dark .select-all-btn:hover { color: #fff; }
 body.theme-dark .run-chart-point { stroke: #2a2b2f; }
 body.theme-dark .run-chart-point.selected,
 body.theme-dark .run-chart-point:focus-visible { stroke: #fff; }
-body.theme-dark .stats-chart { color: #8ea2ff; }
