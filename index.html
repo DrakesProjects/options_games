@@ -6,31 +6,48 @@
   <title>Options Games</title>
   <link rel="stylesheet" href="style.css">
 </head>
-<body style="display:flex; flex-direction:column; align-items:center; text-align:center;">
-  <h1>Options Games</h1>
-  <p class="subtitle">by Drake Adams and Claude Code</p>
+<body class="hub-page">
+  <header class="hub-header">
+    <h1>Options Games</h1>
+    <p class="subtitle">by Drake Adams and Claude Code</p>
+  </header>
 
-  <div class="game-grid">
-    <div class="game-card">
+  <!-- data-game is the game's past-results id; data-labs lists its Lab ids,
+       each optionally followed by ":" and a label shown beside its problem area. -->
+  <main class="hub-grid">
+    <section class="hub-card" data-game="parity" data-labs="parity">
       <h2>Put-Call Parity</h2>
+      <p class="hub-desc">Solve for the call, put, straddle, B/W, or P&amp;S.</p>
+      <p class="hub-stat" data-hub-best></p>
+      <p class="hub-stat hub-weak hidden" data-hub-weak></p>
       <a href="games/parity.html" class="btn">Play</a>
-    </div>
+    </section>
 
-    <div class="game-card">
+    <section class="hub-card" data-game="pcp-2" data-labs="pcp2-medium:Medium,pcp2-hard:Hard">
       <h2>PCP 2</h2>
+      <p class="hub-desc">Relate verticals, strangles, time spreads, flies, and swaps.</p>
+      <p class="hub-stat" data-hub-best></p>
+      <p class="hub-stat hub-weak hidden" data-hub-weak></p>
       <a href="games/pcp2.html" class="btn">Play</a>
-    </div>
+    </section>
 
-    <div class="game-card">
+    <section class="hub-card" data-game="position-risks" data-labs="greeks">
       <h2>Position Risks</h2>
+      <p class="hub-desc">Call each Greek +, −, or ~0 for a position.</p>
+      <p class="hub-stat" data-hub-best></p>
+      <p class="hub-stat hub-weak hidden" data-hub-weak></p>
       <a href="games/greeks.html" class="btn">Play</a>
-    </div>
+    </section>
 
-    <div class="game-card">
+    <section class="hub-card" data-game="arithmetic" data-labs="arithmetic">
       <h2>Mental Math</h2>
+      <p class="hub-desc">Arithmetic speed drill: +, −, ×, ÷.</p>
+      <p class="hub-stat" data-hub-best></p>
+      <p class="hub-stat hub-weak hidden" data-hub-weak></p>
       <a href="games/arithmetic.html" class="btn">Play</a>
-    </div>
+    </section>
+  </main>
 
-  </div>
+  <script src="hub.js"></script>
 </body>
 </html>

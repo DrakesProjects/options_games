@@ -194,7 +194,7 @@ test('B/W & P&S practice covers both and a run with no answers records nothing n
 
 test('the page loads the Lab before the game and has the practice and end-title hooks', () => {
   const scripts = [...html.matchAll(/<script src="([^"]+)"/g)].map((match) => match[1]);
-  assert.deepEqual(scripts, ['../js/lab-core.js', 'lab.js', 'parity.js', 'stats.js']);
+  assert.deepEqual(scripts, ['../js/lab-core.js', 'lab.js', 'parity.js', 'stats.js', 'tabs.js']);
   assert.match(html, /id="practice-tag" class="practice-tag hidden"/);
   assert.match(html, /<h2 id="end-title">Time's up<\/h2>/);
 });

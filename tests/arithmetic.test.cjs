@@ -183,7 +183,7 @@ test('the Lab reports four broad operations and flags the most time per correct 
 
 test('page loads the core before the controller, and every referenced id exists', () => {
   const scripts = [...html.matchAll(/<script src="([^"]+)"/g)].map((match) => match[1]);
-  assert.deepEqual(scripts, ['../js/arithmetic-core.js', 'arithmetic.js', 'stats.js']);
+  assert.deepEqual(scripts, ['../js/arithmetic-core.js', 'arithmetic.js', 'stats.js', 'tabs.js']);
   for (const script of scripts) assert.ok(fs.existsSync(path.resolve(root, 'games', script)));
   const ids = new Set([...html.matchAll(/\sid="([^"]+)"/g)].map((match) => match[1]));
   for (const [, id] of controllerSource.matchAll(/\$\('([^']+)'\)/g)) assert.ok(ids.has(id), `missing #${id}`);

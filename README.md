@@ -2,6 +2,11 @@
 
 Timed exercises for building options intuition. Open `index.html` in a browser; no install or build required.
 
+## Layout
+
+- **Home:** one card per game, showing your best answers-per-minute, how many runs you've completed, and the Lab's current problem area (PCP 2 shows Medium and Hard separately).
+- **Game pages:** the setup screen has **Play** (settings), **Lab**, and **History** (past results) tabs. The tabs disappear during a run and come back, on the tab you left, when it ends.
+
 ## Games
 
 - **Put-Call Parity:** solve for Call, Put, Straddle, B/W, or P&S. Straddle and B/W + P&S questions can be toggled in settings.
@@ -12,11 +17,11 @@ Timed exercises for building options intuition. Open `index.html` in a browser; 
 
 Both PCP games sample uniformly across question variants and shuffle rows. Answers must match to the cent: correct answers advance immediately; incorrect answers allow retries.
 
-All games offer 1, 2, 5, 10, 15, 30, or 60-minute sessions. Completed nonzero-score runs are saved locally as answers per minute, with history below settings and a **Clear all** control.
+All games offer 1, 2, 5, 10, 15, 30, or 60-minute sessions. Completed nonzero-score runs are saved locally as answers per minute, shown on the **History** tab with a **Clear all** control.
 
 ## Lab
 
-Every game's setup screen has a **Lab** that tracks each answered question's time and wrong entries, rolls them into a few broad categories over each category's last 200, and flags a **Problem area** once at least two categories have 10+ records. Each row's **Practice** button runs only that category, even one turned off in settings; practice runs update the Lab but are not saved to past results. The question the timer cuts off is left out. Data is stored locally with a **Clear Lab** control.
+Every game has a **Lab** tab that tracks each answered question's time and wrong entries, rolls them into a few broad categories over each category's last 200, and flags a **Problem area** once at least two categories have 10+ records. Each row's **Practice** button runs only that category, even one turned off in settings; practice runs update the Lab but are not saved to past results. The question the timer cuts off is left out. Data is stored locally with a **Clear Lab** control.
 
 - **Put-Call Parity:** by what you solve for: Call, Put, Straddle, B/W & P&S. Problem area = most time per question.
 - **PCP 2:** by the most advanced structure in the question's relationship: Parity & combos, Verticals & boxes, Straddles & strangles, Time spreads, Flies. Medium and Hard keep separate Labs; Hard has no Parity & combos questions. Problem area = most time per question.
@@ -37,7 +42,7 @@ Accuracy is correct ÷ (correct + wrong entries); a blank answer is asked for ag
 
 ## Tests
 
-Checks cover PCP 2 algebra and gameplay, Put-Call Parity gameplay, Position Risks settings and option-count sampling, Mental Math problem generation, scoring, and gameplay, and the Lab in every game:
+Checks cover PCP 2 algebra and gameplay, Put-Call Parity gameplay, Position Risks settings and option-count sampling, Mental Math problem generation, scoring, and gameplay, the Lab in every game, and the home page cards and setup tabs:
 
 ```sh
 node --test tests/*.test.cjs

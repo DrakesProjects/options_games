@@ -262,6 +262,41 @@
   }
 }
 
+/* ── Setup tabs: Play · Lab · History ───────────────────── */
+
+.setup-tabs {
+  display: flex;
+  flex: 0 0 auto;
+  justify-content: center;
+  width: min(100%, 42rem);
+  border-bottom: 1px solid #ddd;
+}
+
+.setup-tab {
+  font-family: inherit;
+  font-size: 0.85rem;
+  padding: 0.55rem 1.1rem;
+  margin-bottom: -1px;
+  background: none;
+  border: none;
+  border-bottom: 2px solid transparent;
+  color: #888;
+  cursor: pointer;
+}
+
+.setup-tab:hover { color: #1a1a1a; }
+
+.setup-tab[aria-selected="true"] {
+  color: #1a1a1a;
+  font-weight: bold;
+  border-bottom-color: #1a1a1a;
+}
+
+.setup-tab:focus-visible {
+  outline: 2px solid #4263eb;
+  outline-offset: -2px;
+}
+
 /* ── Lab (shared by every game's setup screen) ──────────── */
 
 .visually-hidden {

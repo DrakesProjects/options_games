@@ -183,3 +183,19 @@ test('first-try Labs label their columns for shared-timer answers', () => {
   assert.match(lab.panel.text, /lowest first-try accuracy/);
   assert.match(lab.panel.text, /splits each question's time/);
 });
+
+test('each Lab saves its current problem area for the home page', () => {
+  const { lab, store } = mountPanel();
+  const summary = (id) => JSON.parse(store.get(`options-games.lab-summary.v1.${id}`));
+  assert.deepEqual(summary('demo'), { problemArea: null });
+  lab.record([...records('a', 10, 6000, 1), ...records('b', 10, 2000)]);
+  assert.deepEqual(summary('demo'), { problemArea: 'Alpha' });
+
+  lab.use('demo-hard', [{ key: 'b', label: 'Beta' }]);
+  assert.deepEqual(summary('demo-hard'), { problemArea: null });
+  assert.deepEqual(summary('demo'), { problemArea: 'Alpha' });
+
+  lab.use('demo', categories);
+  lab.panel.find((node) => node.textContent === 'Clear Lab').listeners.click();
+  assert.deepEqual(summary('demo'), { problemArea: null });
+});

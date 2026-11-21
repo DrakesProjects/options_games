@@ -59,6 +59,7 @@
     setupBox.after(panel);
 
     let storageKey = '';
+    let summaryKey = '';
     let activeCategories = [];
     let history = {};
 
@@ -79,8 +80,20 @@
       }
     }
 
+    // The home page shows each game's current problem area.
+    function saveSummary(report) {
+      try {
+        const weakest = report.find((row) => row.weakest);
+        localStorage.setItem(summaryKey, JSON.stringify({ problemArea: weakest ? weakest.label : null }));
+      } catch {
+        // Storage can be unavailable (private windows); the game still works.
+      }
+    }
+
     function render() {
-      const rows = Core.report(history, activeCategories, metric).map((row) => {
+      const report = Core.report(history, activeCategories, metric);
+      saveSummary(report);
+      const rows = report.map((row) => {
         const tr = el('tr', row.weakest ? 'lab-weak' : '');
         const name = el('th', '', row.label);
         name.scope = 'row';
@@ -109,6 +122,7 @@
     // Switch to another set of records, e.g. PCP 2's Medium vs Hard.
     function use(nextId, nextCategories) {
       storageKey = `options-games.lab.v1.${nextId}`;
+      summaryKey = `options-games.lab-summary.v1.${nextId}`;
       activeCategories = nextCategories;
       history = load();
       render();

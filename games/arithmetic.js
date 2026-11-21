@@ -4,6 +4,7 @@
   const Core = globalThis.ArithmeticCore;
   const SETTINGS_KEY = 'options-games.arithmetic.v1.settings';
   const LAB_KEY = 'options-games.arithmetic.v1.lab';
+  const LAB_SUMMARY_KEY = 'options-games.lab-summary.v1.arithmetic';
   const SVG_NS = 'http://www.w3.org/2000/svg';
   const $ = (id) => document.getElementById(id);
 
@@ -147,7 +148,10 @@
 
   function renderLab() {
     labBody.replaceChildren();
-    for (const row of Core.labReport(labHistory)) {
+    const report = Core.labReport(labHistory);
+    // The home page shows each game's current problem area.
+    saveJson(LAB_SUMMARY_KEY, { problemArea: report.find((row) => row.weakest)?.label || null });
+    for (const row of report) {
       const tr = document.createElement('tr');
       if (row.weakest) tr.className = 'lab-weak';
 

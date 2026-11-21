@@ -319,6 +319,10 @@ body.theme-dark .lab-weak td { background: #3a3122; }
 body.theme-dark .lab-tag,
 body.theme-dark .practice-tag { color: #f0b85a; border-color: #8a6a2e; }
 body.theme-dark .lab-practice-btn { border-color: #e6e6e3; }
+body.theme-dark .setup-tabs { border-bottom-color: #3d3e43; }
+body.theme-dark .setup-tab { color: #9a9a96; }
+body.theme-dark .setup-tab:hover { color: #e6e6e3; }
+body.theme-dark .setup-tab[aria-selected="true"] { color: #e6e6e3; border-bottom-color: #e6e6e3; }
 body.theme-dark .lab-practice-btn:hover { background: #e6e6e3; color: #1a1a1a; }
 body.theme-dark .best-note,
 body.theme-dark .range-name,
