@@ -238,6 +238,8 @@
   }
 
   function recordCompletedGame() {
+    // Games can mark an end screen as unscored, e.g. a practice run.
+    if (endScreen.dataset.statsIgnore === 'true') return;
     const score = Number(finalScore.textContent);
     const durationSeconds = Number(durationSelect.value);
     if (!Number.isFinite(score) || score <= 0 || !Number.isFinite(durationSeconds) || durationSeconds <= 0) {

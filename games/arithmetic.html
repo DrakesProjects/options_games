@@ -1,0 +1,174 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Mental Math</title>
+  <link rel="stylesheet" href="../style.css">
+  <link rel="stylesheet" href="stats.css">
+  <link rel="stylesheet" href="arithmetic.css">
+</head>
+<body class="game-page" data-stats-game="arithmetic">
+
+  <!-- Always-visible top bar -->
+  <div class="top-bar">
+    <div class="top-bar-left">
+      <span class="top-bar-title">Mental Math</span>
+      <a href="../index.html" class="back-link">← Back</a>
+    </div>
+    <div id="top-bar-right" class="top-bar-right hidden">
+      <span class="score-display">Score: <span id="score-value">0</span></span>
+    </div>
+  </div>
+
+  <!-- Timer bar (only visible during game) -->
+  <div id="timer-wrap" class="timer-bar-wrap hidden">
+    <div id="timer-bar" class="timer-bar" style="width:100%"></div>
+  </div>
+  <div id="timer-label" class="timer-label hidden"></div>
+
+  <!-- Setup screen -->
+  <div id="setup-screen" class="setup-overlay">
+    <div class="setup-box arith-setup">
+      <p id="best-note" class="best-note"></p>
+
+      <label class="setup-label" for="duration-select">Session duration</label>
+      <select id="duration-select" class="duration-select">
+        <option value="60">1 min</option>
+        <option value="120" selected>2 min</option>
+        <option value="300">5 min</option>
+        <option value="600">10 min</option>
+        <option value="900">15 min</option>
+        <option value="1800">30 min</option>
+        <option value="3600">60 min</option>
+      </select>
+
+      <span class="setup-label">Operations</span>
+      <div class="setup-checklist">
+        <label><input type="checkbox" class="op-check" value="add" checked> Addition</label>
+        <label><input type="checkbox" class="op-check" value="sub" checked> Subtraction</label>
+        <label><input type="checkbox" class="op-check" value="mul" checked> Multiplication</label>
+        <label><input type="checkbox" class="op-check" value="div" checked> Division</label>
+      </div>
+
+      <span class="setup-label">Number ranges</span>
+      <div class="range-grid">
+        <span class="range-name">Addition</span>
+        <span class="range-inputs">
+          (<input type="number" class="range-input" id="add-left-min" min="1" max="9999" aria-label="Addition first number minimum">
+          to <input type="number" class="range-input" id="add-left-max" min="1" max="9999" aria-label="Addition first number maximum">)
+          +
+          (<input type="number" class="range-input" id="add-right-min" min="1" max="9999" aria-label="Addition second number minimum">
+          to <input type="number" class="range-input" id="add-right-max" min="1" max="9999" aria-label="Addition second number maximum">)
+        </span>
+        <span class="range-name">Multiplication</span>
+        <span class="range-inputs">
+          (<input type="number" class="range-input" id="mul-left-min" min="1" max="9999" aria-label="Multiplication first factor minimum">
+          to <input type="number" class="range-input" id="mul-left-max" min="1" max="9999" aria-label="Multiplication first factor maximum">)
+          ×
+          (<input type="number" class="range-input" id="mul-right-min" min="1" max="9999" aria-label="Multiplication second factor minimum">
+          to <input type="number" class="range-input" id="mul-right-max" min="1" max="9999" aria-label="Multiplication second factor maximum">)
+        </span>
+      </div>
+      <p class="setup-note">Subtraction reverses addition problems; division reverses multiplication problems, dividing by the first factor.</p>
+
+      <div class="setup-row">
+        <label class="setup-label" for="theme-select">Theme</label>
+        <select id="theme-select" class="duration-select theme-select">
+          <option value="light">Light</option>
+          <option value="dark">Dark</option>
+        </select>
+        <button type="button" id="reset-btn" class="select-all-btn">Reset to standard</button>
+      </div>
+
+      <p id="setup-error" class="setup-error" role="alert"></p>
+      <button id="start-btn" class="btn">Start</button>
+      <p class="setup-note setup-hint">Press Space to start. In a run: Enter skips, Space restarts, Esc quits.</p>
+    </div>
+
+    <section class="lab-panel" aria-labelledby="lab-title">
+      <div class="stats-heading-row">
+        <div>
+          <h2 id="lab-title" class="stats-title">Lab</h2>
+          <p class="stats-subtitle">Last 200 questions per operation · problem area = most time per correct answer</p>
+        </div>
+        <button type="button" id="lab-clear-btn" class="stats-delete-all">Clear Lab</button>
+      </div>
+      <table class="lab-table">
+        <thead>
+          <tr><th scope="col">Operation</th><th scope="col">Questions</th><th scope="col">Accuracy</th><th scope="col">Avg time</th><th scope="col"><span class="visually-hidden">Practice</span></th></tr>
+        </thead>
+        <tbody id="lab-body"></tbody>
+      </table>
+      <p class="stats-subtitle">Target practice drills one operation at its configured range and isn't saved to past results.</p>
+    </section>
+  </div>
+
+  <!-- Game screen -->
+  <div id="game-screen" class="game-center hidden">
+    <div class="arith-card">
+      <p id="practice-tag" class="practice-tag hidden"></p>
+      <div id="problem" class="arith-problem" aria-live="polite"></div>
+      <input
+        id="answer-input"
+        class="arith-input"
+        type="text"
+        inputmode="numeric"
+        autocomplete="off"
+        spellcheck="false"
+        aria-label="Answer"
+      >
+      <div id="numpad" class="numpad hidden" aria-label="Number pad">
+        <button type="button" class="numpad-key" data-key="1">1</button>
+        <button type="button" class="numpad-key" data-key="2">2</button>
+        <button type="button" class="numpad-key" data-key="3">3</button>
+        <button type="button" class="numpad-key" data-key="4">4</button>
+        <button type="button" class="numpad-key" data-key="5">5</button>
+        <button type="button" class="numpad-key" data-key="6">6</button>
+        <button type="button" class="numpad-key" data-key="7">7</button>
+        <button type="button" class="numpad-key" data-key="8">8</button>
+        <button type="button" class="numpad-key" data-key="9">9</button>
+        <button type="button" class="numpad-key" data-key="back" aria-label="Delete">⌫</button>
+        <button type="button" class="numpad-key" data-key="0">0</button>
+        <button type="button" class="numpad-key" data-key="skip">Skip</button>
+      </div>
+      <p class="arith-hint">Enter skips · Space restarts · Esc quits</p>
+    </div>
+  </div>
+
+  <!-- End screen -->
+  <div id="end-screen" class="game-center hidden">
+    <div class="end-box arith-end">
+      <h2 id="end-title">Time's up</h2>
+      <div class="final-score">
+        <span id="final-score">0</span>
+        <span class="label">correct answers</span>
+      </div>
+      <p id="best-message" class="best-message"></p>
+      <div class="end-stats">
+        <div class="end-stat"><span class="end-stat-label">Accuracy</span><span id="end-accuracy" class="end-stat-value">—</span></div>
+        <div class="end-stat"><span class="end-stat-label">Speed</span><span id="end-qpm" class="end-stat-value">0</span></div>
+        <div class="end-stat"><span class="end-stat-label">Skips</span><span id="end-skips" class="end-stat-value">0</span></div>
+      </div>
+      <figure class="run-chart-figure">
+        <figcaption class="run-chart-caption">Seconds per question · select a point for details</figcaption>
+        <svg id="run-chart" class="run-chart" viewBox="0 0 520 200" role="img" aria-label="Seconds spent on each question"></svg>
+        <div class="run-legend">
+          <span><i class="legend-dot dot-correct"></i>Correct</span>
+          <span><i class="legend-dot dot-retry"></i>Correct after a wrong entry</span>
+          <span><i class="legend-dot dot-skip"></i>Skipped</span>
+        </div>
+      </figure>
+      <p id="run-detail" class="run-detail" aria-live="polite"></p>
+      <div class="end-buttons">
+        <button id="play-again-btn" class="btn">Play again</button>
+        <button id="menu-btn" class="btn btn-secondary">Menu</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="../js/arithmetic-core.js"></script>
+  <script src="arithmetic.js"></script>
+  <script src="stats.js"></script>
+</body>
+</html>

@@ -1,0 +1,410 @@
+/* ── Mental Math ────────────────────────────────────────── */
+
+.visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+}
+
+.btn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.btn-secondary {
+  background: #fff;
+  color: #1a1a1a;
+  border: 1px solid #1a1a1a;
+}
+
+.btn-secondary:hover { background: #eee; }
+
+.top-bar-right {
+  display: flex;
+  align-items: baseline;
+  gap: 1rem;
+}
+
+.practice-tag {
+  font-size: 0.8rem;
+  color: #8a5a00;
+  margin-bottom: -0.5rem;
+}
+
+/* Keyboard shortcuts don't apply when the on-screen pad is in use. */
+.numpad:not(.hidden) + .arith-hint { display: none; }
+
+/* Setup */
+.best-note {
+  font-size: 0.85rem;
+  color: #555;
+}
+
+.range-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 0.2rem;
+  font-size: 0.85rem;
+  text-align: left;
+  width: 100%;
+}
+
+.range-name {
+  color: #555;
+  margin-top: 0.35rem;
+}
+
+.range-inputs {
+  white-space: nowrap;
+}
+
+.range-input {
+  font-family: inherit;
+  font-size: 0.85rem;
+  width: 3.6rem;
+  padding: 0.25rem 0.3rem;
+  border: 1px solid #ccc;
+  background: #fff;
+  color: inherit;
+  text-align: center;
+}
+
+.range-input:focus {
+  outline: none;
+  border-color: #1a1a1a;
+}
+
+.setup-row {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+  justify-content: center;
+}
+
+.theme-select { width: auto; }
+
+.setup-error {
+  min-height: 1.1em;
+  font-size: 0.8rem;
+  color: #c0392b;
+}
+
+.setup-error:empty { min-height: 0; }
+
+.setup-hint { text-align: center; }
+
+/* Lab */
+.lab-panel {
+  box-sizing: border-box;
+  flex: 0 0 auto;
+  width: min(100%, 42rem);
+  padding: 2rem 2.5rem;
+  background: #fff;
+  border: 1px solid #ddd;
+  text-align: left;
+}
+
+.lab-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin: 0.9rem 0 0.6rem;
+  font-size: 0.85rem;
+}
+
+.lab-table th,
+.lab-table td {
+  padding: 0.45rem 0.4rem;
+  border-bottom: 1px solid #eee;
+  text-align: left;
+  font-weight: normal;
+}
+
+.lab-table thead th {
+  color: #888;
+  font-size: 0.75rem;
+}
+
+.lab-table tbody th { font-weight: bold; }
+.lab-table td:last-child { text-align: right; }
+
+.lab-weak th,
+.lab-weak td { background: #fff4e0; }
+
+.lab-tag {
+  display: inline-block;
+  font-size: 0.68rem;
+  font-weight: normal;
+  color: #8a5a00;
+  border: 1px solid #e0b25c;
+  padding: 0 0.3rem;
+  margin-left: 0.25rem;
+  vertical-align: 1px;
+}
+
+.lab-practice-btn {
+  font-family: inherit;
+  font-size: 0.78rem;
+  padding: 0.25rem 0.6rem;
+  border: 1px solid #1a1a1a;
+  background: transparent;
+  color: inherit;
+  cursor: pointer;
+}
+
+.lab-practice-btn:hover {
+  background: #1a1a1a;
+  color: #fff;
+}
+
+/* Game */
+.arith-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1.25rem;
+  margin-top: 12vh;
+  width: min(100%, 26rem);
+}
+
+.arith-problem {
+  font-size: clamp(2.4rem, 9vw, 3.6rem);
+  font-weight: bold;
+  letter-spacing: 0.02em;
+  white-space: nowrap;
+}
+
+.arith-input {
+  font-family: inherit;
+  font-size: 2rem;
+  width: 12rem;
+  padding: 0.2rem 0.4rem;
+  text-align: center;
+  border: none;
+  border-bottom: 2px solid #1a1a1a;
+  background: transparent;
+  color: inherit;
+}
+
+.arith-input:focus { outline: none; }
+
+.arith-hint {
+  font-size: 0.75rem;
+  color: #999;
+}
+
+.numpad {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 0.5rem;
+  width: min(100%, 18rem);
+}
+
+.numpad-key {
+  font-family: inherit;
+  font-size: 1.3rem;
+  padding: 0.75rem 0;
+  border: 1px solid #ccc;
+  background: #fff;
+  color: inherit;
+  touch-action: manipulation;
+}
+
+.numpad-key[data-key="skip"],
+.numpad-key[data-key="back"] { font-size: 0.95rem; }
+
+/* End screen */
+.arith-end {
+  width: min(100%, 36rem);
+}
+
+.best-message {
+  min-height: 1.1em;
+  font-size: 0.85rem;
+  color: #27ae60;
+}
+
+.end-stats {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 0.6rem;
+  width: 100%;
+}
+
+.end-stat {
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+  padding: 0.6rem;
+  background: #fff;
+  border: 1px solid #ddd;
+}
+
+.end-stat-label {
+  font-size: 0.7rem;
+  color: #888;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.end-stat-value {
+  font-size: 1.15rem;
+  font-weight: bold;
+}
+
+.run-chart-figure {
+  width: 100%;
+  margin-top: 0.75rem;
+  padding: 0.75rem;
+  background: #fff;
+  border: 1px solid #ddd;
+}
+
+.run-chart-caption {
+  font-size: 0.75rem;
+  color: #777;
+  text-align: left;
+  margin-bottom: 0.4rem;
+}
+
+.run-chart {
+  display: block;
+  width: 100%;
+  height: auto;
+  overflow: visible;
+}
+
+.run-chart-frame {
+  fill: transparent;
+  stroke: rgba(127, 127, 127, 0.35);
+}
+
+.run-chart-gridline {
+  stroke: rgba(127, 127, 127, 0.2);
+  stroke-width: 1;
+}
+
+.run-chart-label {
+  fill: #888;
+  font-size: 11px;
+  font-family: inherit;
+}
+
+.run-chart-line {
+  fill: none;
+  stroke: #4263eb;
+  stroke-width: 1.5;
+  opacity: 0.55;
+}
+
+.run-chart-point {
+  cursor: pointer;
+  stroke: #fff;
+  stroke-width: 1;
+}
+
+.run-chart-point:focus { outline: none; }
+
+.run-chart-point.selected,
+.run-chart-point:focus-visible {
+  stroke: #1a1a1a;
+  stroke-width: 2.5;
+}
+
+.point-correct, .dot-correct { fill: #4263eb; background: #4263eb; }
+.point-retry, .dot-retry { fill: #e08a00; background: #e08a00; }
+.point-skip, .dot-skip { fill: #c0392b; background: #c0392b; }
+
+.run-legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem 1rem;
+  justify-content: center;
+  margin-top: 0.4rem;
+  font-size: 0.72rem;
+  color: #777;
+}
+
+.legend-dot {
+  display: inline-block;
+  width: 0.55rem;
+  height: 0.55rem;
+  border-radius: 50%;
+  margin-right: 0.3rem;
+}
+
+.run-detail {
+  min-height: 1.2em;
+  font-size: 0.85rem;
+  color: #333;
+}
+
+.end-buttons {
+  display: flex;
+  gap: 0.6rem;
+  margin-top: 0.5rem;
+}
+
+@media (max-width: 480px) {
+  .setup-overlay.setup-with-stats { padding: 1rem; }
+  .setup-overlay.setup-with-stats > .setup-box { min-width: 0; padding: 1.5rem 1.25rem; }
+  .lab-panel { padding: 1.25rem 1rem; }
+  .lab-table { font-size: 0.8rem; }
+  .lab-table th,
+  .lab-table td { padding: 0.45rem 0.2rem; }
+  .lab-table th:nth-child(2),
+  .lab-table td:nth-child(2) { display: none; }
+  .lab-tag { display: block; width: fit-content; margin: 0.2rem 0 0; }
+  .arith-card { margin-top: 4vh; }
+}
+
+/* ── Dark theme ─────────────────────────────────────────── */
+
+body.theme-dark {
+  background: #1e1f22;
+  color: #e6e6e3;
+}
+
+body.theme-dark .top-bar,
+body.theme-dark .setup-box,
+body.theme-dark .lab-panel,
+body.theme-dark .stats-panel,
+body.theme-dark .end-stat,
+body.theme-dark .run-chart-figure,
+body.theme-dark .numpad-key,
+body.theme-dark .duration-select,
+body.theme-dark .range-input {
+  background: #2a2b2f;
+  border-color: #3d3e43;
+  color: #e6e6e3;
+}
+
+body.theme-dark .btn { background: #e6e6e3; color: #1a1a1a; }
+body.theme-dark .btn:hover { background: #fff; }
+body.theme-dark .btn-secondary { background: transparent; color: #e6e6e3; border-color: #e6e6e3; }
+body.theme-dark .btn-secondary:hover { background: #3a3b40; }
+body.theme-dark .timer-bar-wrap { background: #3a3b40; }
+body.theme-dark .timer-bar { background: #e6e6e3; }
+body.theme-dark .timer-bar.warning { background: #e06c5b; }
+body.theme-dark .timer-label { color: #e6e6e3; }
+body.theme-dark .arith-input { border-bottom-color: #e6e6e3; }
+body.theme-dark .lab-table th,
+body.theme-dark .lab-table td { border-bottom-color: #3d3e43; }
+body.theme-dark .lab-weak th,
+body.theme-dark .lab-weak td { background: #3a3122; }
+body.theme-dark .lab-tag,
+body.theme-dark .practice-tag { color: #f0b85a; border-color: #8a6a2e; }
+body.theme-dark .lab-practice-btn { border-color: #e6e6e3; }
+body.theme-dark .lab-practice-btn:hover { background: #e6e6e3; color: #1a1a1a; }
+body.theme-dark .best-note,
+body.theme-dark .range-name,
+body.theme-dark .run-detail { color: #c9c9c5; }
+body.theme-dark .back-link:hover,
+body.theme-dark .select-all-btn:hover { color: #fff; }
+body.theme-dark .run-chart-point { stroke: #2a2b2f; }
+body.theme-dark .run-chart-point.selected,
+body.theme-dark .run-chart-point:focus-visible { stroke: #fff; }
+body.theme-dark .stats-chart { color: #8ea2ff; }
