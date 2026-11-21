@@ -533,3 +533,17 @@ test('touch devices get the on-screen number pad, which can answer and skip', ()
   desktop.el('start-btn').dispatch('click');
   assert.ok(!desktop.visible('numpad'));
 });
+
+test('past-results chart uses 3–6 round intervals whether games are slow or fast', () => {
+  const cases = [[1.2, ['0', '0.5', '1', '1.5']], [3, ['0', '1', '2', '3', '4']], [22, ['0', '5', '10', '15', '20', '25']], [87, ['0', '20', '40', '60', '80', '100']], [100, ['0', '20', '40', '60', '80', '100', '120']]];
+  for (const [rate, expectedLabels] of cases) {
+    const entries = [{ id: 'a', completedAt: 1, durationSeconds: 60, score: Math.max(1, Math.round(rate)), answersPerMinute: rate }];
+    const page = setupPage({ storage: { 'options-games.stats.v1.arithmetic': JSON.stringify(entries) } });
+    const panel = page.el('setup-screen').children.find((child) => child.tagName === 'SECTION');
+    const chart = panel.querySelector('.stats-chart');
+    const gridlines = chart.children.filter((child) => child.attributes.class === 'stats-chart-gridline');
+    const labels = chart.children.filter((child) => child.attributes.class === 'stats-chart-label' && /^[\d.]+$/.test(child.textContent));
+    assert.deepEqual(labels.map((label) => label.textContent), expectedLabels, `rate ${rate}`);
+    assert.ok(gridlines.length >= 4 && gridlines.length <= 7, `rate ${rate}: ${gridlines.length} gridlines`);
+  }
+});

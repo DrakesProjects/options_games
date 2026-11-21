@@ -88,6 +88,15 @@
     return element;
   }
 
+  // Smallest round step (1, 2, or 5 × 10ⁿ, at least 0.5) that keeps the axis to
+  // about five intervals, so fast games like Mental Math don't stack labels.
+  function niceTickInterval(highestRate) {
+    const target = Math.max(highestRate, 0) / 5;
+    const magnitude = 10 ** Math.floor(Math.log10(target || 1));
+    const step = [1, 2, 5, 10].map((factor) => factor * magnitude).find((candidate) => candidate >= target);
+    return Math.max(0.5, step);
+  }
+
   function renderChart() {
     chart.replaceChildren();
 
@@ -119,8 +128,10 @@
     const plotWidth = width - margin.left - margin.right;
     const plotHeight = height - margin.top - margin.bottom;
     const highestRate = Math.max(...chronological.map((entry) => entry.answersPerMinute));
-    const tickInterval = 0.5;
-    const yMaximum = Math.ceil(highestRate / tickInterval) * tickInterval + tickInterval;
+    const tickInterval = niceTickInterval(highestRate);
+    const roundedUp = Math.ceil(highestRate / tickInterval) * tickInterval;
+    // Leave headroom only when the highest point would crowd the top edge.
+    const yMaximum = highestRate > roundedUp - tickInterval / 4 ? roundedUp + tickInterval : roundedUp;
     const tickCount = Math.round(yMaximum / tickInterval);
     const xPosition = (index) => (
       chronological.length === 1
