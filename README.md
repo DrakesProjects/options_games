@@ -6,7 +6,7 @@ Timed exercises for building options intuition. Open `index.html` in a browser; 
 
 - **Put-Call Parity:** solve for Call, Put, Straddle, B/W, or P&S. Straddle and B/W + P&S questions can be toggled in settings.
 - **PCP 2:** broader structure relationships, including verticals, strangles, time spreads, flies, and swaps. Medium has 63 families / 209 question variants; Hard combines three relationships per family, with 120 families / 794 variants. Every quantity can be the unknown. Medium shows 6 given quotes and Hard 9, each including at least two irrelevant structures that cannot replace the required clues.
-- **Position Risks:** identify Greek signs (+, −, or ~0) for named strategies or random multi-leg positions. Random/Both modes offer a maximum of 1–10 options (default 4); each random question uniformly samples 1 through that maximum, excluding optional stock. Named strategies use reference signs; random positions use Black–Scholes Greeks.
+- **Position Risks:** identify Greek signs (+, −, or ~0). Named mode uses PCP 2's 20 position types, long and short, with only component moneyness beneath each name. Greeks are calculated from the legs at the setup screen's fixed assumptions. Random/Both modes offer a maximum of 1–10 options (default 4); each random question uniformly samples 1 through that maximum, excluding optional stock.
 
 Both PCP games sample uniformly across question variants and shuffle rows. Answers must match to the cent: correct answers advance immediately; incorrect answers allow retries.
 

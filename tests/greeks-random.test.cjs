@@ -20,6 +20,7 @@ class Element {
     this.children = [];
     this.listeners = {};
     this.value = '';
+    this.dataset = {};
     this.checked = false;
     this.disabled = false;
     const classes = new Set();
@@ -28,11 +29,13 @@ class Element {
       toggle: (name, force = !classes.has(name)) => force ? classes.add(name) : classes.delete(name),
     };
   }
-  set innerHTML(value) { this.children = []; }
+  set innerHTML(value) { this.children = []; this.markup = value; }
+  get innerHTML() { return this.markup || ''; }
   get options() { return this.children; }
   appendChild(child) { this.children.push(child); }
   addEventListener(name, listener) { this.listeners[name] = listener; }
   closest() { return this; }
+  querySelectorAll() { return []; }
 }
 
 function setup() {
@@ -68,6 +71,7 @@ function setup() {
       },
     },
   });
+  vm.runInContext(fs.readFileSync(path.join(root, 'js/position-structures.js'), 'utf8'), runtime, { filename: 'position-structures.js' });
   vm.runInContext(source, runtime, { filename: 'greeks.js' });
   return {
     runtime, element,
@@ -87,12 +91,15 @@ test('maximum-options selector appears only for Random and Both, and preserves i
   assert.deepEqual([...select.matchAll(/value="(\d+)"/g)].map((match) => Number(match[1])), [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]);
   assert.equal(game.element('max-options-select').value, '4');
   assert.equal(game.element('random-position-settings').classList.contains('hidden'), true);
+  assert.equal(game.element('named-position-note').classList.contains('hidden'), false);
   for (const mode of ['custom', 'both']) {
     game.setMode(mode);
     assert.equal(game.element('random-position-settings').classList.contains('hidden'), false);
+    assert.equal(game.element('named-position-note').classList.contains('hidden'), mode === 'custom');
     game.element('max-options-select').value = '7';
     game.setMode('named');
     assert.equal(game.element('random-position-settings').classList.contains('hidden'), true);
+    assert.equal(game.element('named-position-note').classList.contains('hidden'), false);
     assert.equal(game.element('max-options-select').value, '7');
   }
 });
@@ -181,4 +188,37 @@ test('stock is extra and random option positions retain mixed expirations and co
   }
   assert.ok(sawStock);
   assert.ok(sawMixedExpiries);
+});
+
+test('named questions render only the position name and optional component moneyness', () => {
+  const { runtime, element } = setup();
+  const positions = vm.runInContext('NAMED_POSITIONS', runtime);
+  const keys = ['delta', 'gamma', 'theta', 'vega', 'rho', 'vanna', 'charm', 'speed', 'volga', 'vegaDecay', 'zomma', 'color'];
+  const remainder = seededRandom(441);
+  positions.forEach((position, index) => {
+    let first = true;
+    runtime.Math.random = () => {
+      if (first) { first = false; return (index + 0.5) / positions.length; }
+      return remainder();
+    };
+    const question = runtime.generateNamedQuestion(keys, keys.length);
+    assert.equal(question.name, position.name);
+    assert.equal(question.items.length, keys.length);
+    for (const item of question.items) assert.equal(item.correctSign, position.greeks[item.key]);
+    runtime.renderQuestion(question);
+    const markup = element('position-display').innerHTML;
+    assert.ok(markup.includes(`<div class="position-name">${position.name}</div>`));
+    assert.doesNotMatch(markup, /position-legs|\b(?:Buy|Sell)\b|\[object Object\]/);
+    assert.equal(markup.includes('position-moneyness'), Boolean(position.moneyness));
+    if (position.moneyness) {
+      assert.match(position.moneyness, /ATM|ITM|OTM/);
+      assert.ok(markup.includes(position.moneyness));
+    }
+  });
+});
+
+test('Position Risks loads its structure catalog before the game controller', () => {
+  const scripts = [...html.matchAll(/<script src="([^"]+)"/g)].map((match) => match[1]);
+  assert.deepEqual(scripts, ['../js/position-structures.js', '../js/greeks.js', 'stats.js']);
+  for (const script of scripts) assert.ok(fs.existsSync(path.resolve(root, 'games', script)));
 });

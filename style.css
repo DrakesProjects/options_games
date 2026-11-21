@@ -206,6 +206,11 @@ body.game-page {
   max-width: 18rem;
 }
 
+#named-position-note {
+  max-width: 18rem;
+  line-height: 1.45;
+}
+
 /* ── Game center (round card & end screen) ──────────────── */
 
 .game-center {
@@ -368,7 +373,7 @@ body.game-page {
   margin-bottom: 0.3rem;
 }
 
-.position-legs {
+.position-moneyness {
   font-size: 0.8rem;
   color: #666;
   margin-bottom: 1.25rem;

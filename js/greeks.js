@@ -7,7 +7,8 @@ function normCDF(x) {
   const a1 =  0.254829592, a2 = -0.284496736, a3 =  1.421413741;
   const a4 = -1.453152027, a5 =  1.061405429, p  =  0.3275911;
   const sign = x < 0 ? -1 : 1;
-  x = Math.abs(x);
+  // The polynomial approximates erf; Phi(x) = (1 + erf(x / sqrt(2))) / 2.
+  x = Math.abs(x) / Math.SQRT2;
   const t = 1 / (1 + p * x);
   const y = 1 - (((((a5*t + a4)*t) + a3)*t + a2)*t + a1)*t * Math.exp(-x*x);
   return 0.5 * (1 + sign * y);
@@ -26,7 +27,6 @@ function bsGreeks(type, S, K, r, sigma, T) {
   const phi = normPDF(d1);
   const Nd1 = normCDF(d1);
   const Nd2 = normCDF(d2);
-  const Nm_d1 = normCDF(-d1);
   const Nm_d2 = normCDF(-d2);
   const eRT = Math.exp(-r * T);
 
@@ -43,14 +43,14 @@ function bsGreeks(type, S, K, r, sigma, T) {
 
   // Second-order
   const vanna = -phi * d2 / sigma;                            // dDelta/dVol
-  // Charm: dDelta/dT  — call version; put negates the d2 term sign
-  const charm = type === 'call'
-    ? -phi * (2 * r * T - d2 * sigma * sqrtT) / (2 * T * sigma * sqrtT)
-    : -phi * (2 * r * T - d2 * sigma * sqrtT) / (2 * T * sigma * sqrtT) + r * Nm_d1 / T;
+  // Calendar-time delta decay. With no dividends, put delta is call delta
+  // minus one, so their time derivatives must be identical.
+  const charm = -phi * (2 * r * T - d2 * sigma * sqrtT) / (2 * T * sigma * sqrtT);
   const speed  = -gamma * (d1 / (sigma * sqrtT) + 1) / S;
   const volga  = vega * d1 * d2 / sigma;                     // dVega/dVol
-  // VegaDecay: dVega/dT
-  const vegaDecay = vegaRaw * (d1 * d2 / (2 * T) - 1 / (2 * T)) / 100;
+  // VegaDecay: calendar-time vega decay (dVega/dt = -dVega/dT), per 1% vol,
+  // matching the theta, charm, and color convention.
+  const vegaDecay = vegaRaw * (r * d1 / (sigma * sqrtT) - (1 + d1 * d2) / (2 * T)) / 100;
   const zomma  = gamma * (d1 * d2 - 1) / sigma;
   // Color: dGamma/dT
   const color  = -phi / (2 * S * T * sigma * sqrtT) *
@@ -59,13 +59,14 @@ function bsGreeks(type, S, K, r, sigma, T) {
   return { delta, gamma, theta, vega, rho, vanna, charm, speed, volga, vegaDecay, zomma, color };
 }
 
-// Sum Greeks across legs; underlying legs contribute only delta
+// Sum Greeks across legs; underlying contributes only delta, fixed cash none.
 function computeNetGreeks(legs) {
   const keys = ['delta','gamma','theta','vega','rho','vanna','charm','speed','volga','vegaDecay','zomma','color'];
   const net = {};
   keys.forEach(k => net[k] = 0);
 
   for (const leg of legs) {
+    if (leg.type === 'cash') continue;
     if (leg.type === 'underlying') {
       net.delta += leg.direction; // +1 or -1
       continue;
@@ -85,52 +86,14 @@ function sign(val, threshold = 0.0001) {
 
 // ─── Position catalog (named mode) ───────────────────────────────────────────
 
-const NAMED_POSITIONS = [
-  { name: 'Long Call',        legs: 'Buy 1 call',
-    greeks: { delta:'+', gamma:'+', theta:'-', vega:'+', rho:'+', vanna:'+', charm:'-', speed:'-', volga:'+', vegaDecay:'-', zomma:'-', color:'-' }},
-  { name: 'Short Call',       legs: 'Sell 1 call',
-    greeks: { delta:'-', gamma:'-', theta:'+', vega:'-', rho:'-', vanna:'-', charm:'+', speed:'+', volga:'-', vegaDecay:'+', zomma:'+', color:'+' }},
-  { name: 'Long Put',         legs: 'Buy 1 put',
-    greeks: { delta:'-', gamma:'+', theta:'-', vega:'+', rho:'-', vanna:'-', charm:'+', speed:'+', volga:'+', vegaDecay:'-', zomma:'+', color:'-' }},
-  { name: 'Short Put',        legs: 'Sell 1 put',
-    greeks: { delta:'+', gamma:'-', theta:'+', vega:'-', rho:'+', vanna:'+', charm:'-', speed:'-', volga:'-', vegaDecay:'+', zomma:'-', color:'+' }},
-  { name: 'Long Underlying',  legs: 'Long underlying',
-    greeks: { delta:'+', gamma:'~0', theta:'~0', vega:'~0', rho:'~0', vanna:'~0', charm:'~0', speed:'~0', volga:'~0', vegaDecay:'~0', zomma:'~0', color:'~0' }},
-  { name: 'Short Underlying', legs: 'Short underlying',
-    greeks: { delta:'-', gamma:'~0', theta:'~0', vega:'~0', rho:'~0', vanna:'~0', charm:'~0', speed:'~0', volga:'~0', vegaDecay:'~0', zomma:'~0', color:'~0' }},
-  { name: 'Long Straddle',    legs: 'Buy 1 ATM call + buy 1 ATM put (same strike & expiry)',
-    greeks: { delta:'~0', gamma:'+', theta:'-', vega:'+', rho:'~0', vanna:'~0', charm:'~0', speed:'~0', volga:'+', vegaDecay:'-', zomma:'~0', color:'-' }},
-  { name: 'Short Straddle',   legs: 'Sell 1 ATM call + sell 1 ATM put (same strike & expiry)',
-    greeks: { delta:'~0', gamma:'-', theta:'+', vega:'-', rho:'~0', vanna:'~0', charm:'~0', speed:'~0', volga:'-', vegaDecay:'+', zomma:'~0', color:'+' }},
-  { name: 'Long Strangle',    legs: 'Buy 1 OTM call + buy 1 OTM put (same expiry)',
-    greeks: { delta:'~0', gamma:'+', theta:'-', vega:'+', rho:'~0', vanna:'~0', charm:'~0', speed:'~0', volga:'+', vegaDecay:'-', zomma:'~0', color:'-' }},
-  { name: 'Short Strangle',   legs: 'Sell 1 OTM call + sell 1 OTM put (same expiry)',
-    greeks: { delta:'~0', gamma:'-', theta:'+', vega:'-', rho:'~0', vanna:'~0', charm:'~0', speed:'~0', volga:'-', vegaDecay:'+', zomma:'~0', color:'+' }},
-  { name: 'Bull Call Spread', legs: 'Buy lower-strike call + sell higher-strike call (same expiry)',
-    greeks: { delta:'+', gamma:'+', theta:'-', vega:'+', rho:'+', vanna:'+', charm:'-', speed:'-', volga:'+', vegaDecay:'-', zomma:'-', color:'-' }},
-  { name: 'Bear Call Spread', legs: 'Sell lower-strike call + buy higher-strike call (same expiry)',
-    greeks: { delta:'-', gamma:'-', theta:'+', vega:'-', rho:'-', vanna:'-', charm:'+', speed:'+', volga:'-', vegaDecay:'+', zomma:'+', color:'+' }},
-  { name: 'Bull Put Spread',  legs: 'Sell higher-strike put + buy lower-strike put (same expiry)',
-    greeks: { delta:'+', gamma:'-', theta:'+', vega:'-', rho:'+', vanna:'+', charm:'-', speed:'-', volga:'-', vegaDecay:'+', zomma:'-', color:'+' }},
-  { name: 'Bear Put Spread',  legs: 'Buy higher-strike put + sell lower-strike put (same expiry)',
-    greeks: { delta:'-', gamma:'+', theta:'-', vega:'+', rho:'-', vanna:'-', charm:'+', speed:'+', volga:'+', vegaDecay:'-', zomma:'+', color:'-' }},
-  { name: 'Covered Call',     legs: 'Long underlying + sell 1 call',
-    greeks: { delta:'+', gamma:'-', theta:'+', vega:'-', rho:'+', vanna:'-', charm:'+', speed:'+', volga:'-', vegaDecay:'+', zomma:'+', color:'+' }},
-  { name: 'Protective Put',   legs: 'Long underlying + buy 1 put',
-    greeks: { delta:'+', gamma:'+', theta:'-', vega:'+', rho:'+', vanna:'-', charm:'-', speed:'-', volga:'+', vegaDecay:'-', zomma:'+', color:'-' }},
-  { name: 'Long Butterfly',   legs: 'Buy 1 low-strike call, sell 2 ATM calls, buy 1 high-strike call',
-    greeks: { delta:'~0', gamma:'-', theta:'+', vega:'-', rho:'~0', vanna:'~0', charm:'~0', speed:'~0', volga:'-', vegaDecay:'+', zomma:'~0', color:'+' }},
-  { name: 'Short Butterfly',  legs: 'Sell 1 low-strike call, buy 2 ATM calls, sell 1 high-strike call',
-    greeks: { delta:'~0', gamma:'+', theta:'-', vega:'+', rho:'~0', vanna:'~0', charm:'~0', speed:'~0', volga:'+', vegaDecay:'-', zomma:'~0', color:'-' }},
-  { name: 'Short Iron Condor', legs: 'Sell OTM call spread + sell OTM put spread',
-    greeks: { delta:'~0', gamma:'-', theta:'+', vega:'-', rho:'~0', vanna:'~0', charm:'~0', speed:'~0', volga:'-', vegaDecay:'+', zomma:'~0', color:'+' }},
-  { name: 'Long Iron Condor', legs: 'Buy OTM call spread + buy OTM put spread',
-    greeks: { delta:'~0', gamma:'+', theta:'-', vega:'+', rho:'~0', vanna:'~0', charm:'~0', speed:'~0', volga:'+', vegaDecay:'-', zomma:'~0', color:'-' }},
-  { name: 'Long Calendar',    legs: 'Buy far-dated ATM option + sell near-dated ATM option (same strike)',
-    greeks: { delta:'~0', gamma:'-', theta:'+', vega:'+', rho:'~0', vanna:'~0', charm:'~0', speed:'~0', volga:'+', vegaDecay:'~0', zomma:'~0', color:'~0' }},
-  { name: 'Short Calendar',   legs: 'Sell far-dated ATM option + buy near-dated ATM option (same strike)',
-    greeks: { delta:'~0', gamma:'+', theta:'-', vega:'-', rho:'~0', vanna:'~0', charm:'~0', speed:'~0', volga:'-', vegaDecay:'~0', zomma:'~0', color:'~0' }},
-];
+const NAMED_POSITIONS = PositionStructures.structures.flatMap((entry) => [1, -1].map((direction) => {
+  const position = PositionStructures.createPosition(entry, direction);
+  const net = computeNetGreeks(position.legs);
+  return {
+    ...position,
+    greeks: Object.fromEntries(Object.entries(net).map(([key, value]) => [key, sign(value)])),
+  };
+}));
 
 // ─── Greek metadata ───────────────────────────────────────────────────────────
 
@@ -227,6 +190,8 @@ function generateNamedQuestion(selectedKeys, n) {
     return {
       mode: 'named',
       name: pos.name,
+      structureKey: pos.structureKey,
+      moneyness: pos.moneyness,
       legs: pos.legs,
       items: pickedKeys.map(k => ({ key: k, label: GREEK_BY_KEY[k].label, correctSign: pos.greeks[k] })),
     };
@@ -237,6 +202,8 @@ function generateNamedQuestion(selectedKeys, n) {
   return {
     mode: 'named',
     name: pos.name,
+    structureKey: pos.structureKey,
+    moneyness: pos.moneyness,
     legs: pos.legs,
     items: [{ key, label: GREEK_BY_KEY[key].label, correctSign: pos.greeks[key] }],
   };
@@ -266,6 +233,7 @@ const durationSelect = document.getElementById('duration-select');
 const modeSelect     = document.getElementById('mode-select');
 const randomPositionSettings = document.getElementById('random-position-settings');
 const maxOptionsSelect = document.getElementById('max-options-select');
+const namedPositionNote = document.getElementById('named-position-note');
 const batchSelect    = document.getElementById('batch-select');
 const startBtn       = document.getElementById('start-btn');
 const positionDisplay  = document.getElementById('position-display');
@@ -291,6 +259,7 @@ function updateModeSettings() {
   selectedMode = modeSelect.value;
   const namedOnly = selectedMode === 'named';
   randomPositionSettings.classList.toggle('hidden', namedOnly);
+  namedPositionNote.classList.toggle('hidden', selectedMode === 'custom');
   namedOnlyChecks.forEach(cb => {
     cb.disabled = !namedOnly;
     if (!namedOnly) cb.checked = false;
@@ -434,7 +403,7 @@ function renderQuestion(q) {
   if (q.mode === 'named') {
     positionDisplay.innerHTML =
       `<div class="position-name">${q.name}</div>` +
-      `<div class="position-legs">${q.legs}</div>`;
+      (q.moneyness ? `<div class="position-moneyness">${q.moneyness}</div>` : '');
   } else {
     const legLines = q.legs.map(l => `<li>${l.displayLabel}</li>`).join('');
     positionDisplay.innerHTML =
